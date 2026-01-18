@@ -279,7 +279,11 @@ function StationEditForm({ station, onSave, onCancel }) {
           value={destinationFilter}
           onChange={(e) => setDestinationFilter(e.target.value)}
         />
-        <span className="field-hint">Leave empty to show all destinations</span>
+        <span className="field-hint">
+          {station.type === 'national-rail'
+            ? 'Matches final destination or any stop along the route'
+            : 'Matches final destination only (Tube lines only match terminus)'}
+        </span>
       </div>
 
       <div className="edit-field">
