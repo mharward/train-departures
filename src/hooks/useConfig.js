@@ -17,11 +17,13 @@ function migrateStation(station) {
   // Migrate old destinationFilter string to destinations array
   if (!migrated.destinations) {
     if (migrated.destinationFilter && migrated.destinationFilter.trim()) {
-      migrated.destinations = [{
-        id: `text-${migrated.destinationFilter}`,
-        name: migrated.destinationFilter.trim(),
-        crs: null,
-      }]
+      migrated.destinations = [
+        {
+          id: `text-${migrated.destinationFilter}`,
+          name: migrated.destinationFilter.trim(),
+          crs: null,
+        },
+      ]
     } else {
       migrated.destinations = []
     }
@@ -79,9 +81,7 @@ export function useConfig() {
   const updateStation = useCallback((stationId, updates) => {
     setConfig((prev) => ({
       ...prev,
-      stations: prev.stations.map((s) =>
-        s.id === stationId ? { ...s, ...updates } : s
-      ),
+      stations: prev.stations.map((s) => (s.id === stationId ? { ...s, ...updates } : s)),
     }))
   }, [])
 

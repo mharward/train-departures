@@ -9,13 +9,7 @@ import './App.css'
 function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [currentTime, setCurrentTime] = useState(() => new Date())
-  const {
-    config,
-    addStation,
-    updateStation,
-    removeStation,
-    updateSettings,
-  } = useConfig()
+  const { config, addStation, updateStation, removeStation, updateSettings } = useConfig()
 
   // Update current time every minute for schedule filtering
   useEffect(() => {
@@ -31,17 +25,13 @@ function App() {
     [config.stations, currentTime]
   )
 
-  const {
-    departures,
-    loading,
-    errors,
-    lastUpdated,
-    countdown,
-    refresh,
-  } = useDepartures(visibleStations, {
-    autoRefresh: config.autoRefresh,
-    refreshInterval: config.refreshInterval,
-  })
+  const { departures, loading, errors, lastUpdated, countdown, refresh } = useDepartures(
+    visibleStations,
+    {
+      autoRefresh: config.autoRefresh,
+      refreshInterval: config.refreshInterval,
+    }
+  )
 
   // Apply theme to document
   useEffect(() => {

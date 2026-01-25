@@ -49,9 +49,7 @@ function timeToSeconds(timeStr) {
 
 // Fetch TfL arrivals for a station (handles hub stations)
 export async function fetchTflArrivals(stationId) {
-  const response = await fetch(
-    `${TFL_BASE_URL}/StopPoint/${stationId}/Arrivals`
-  )
+  const response = await fetch(`${TFL_BASE_URL}/StopPoint/${stationId}/Arrivals`)
 
   if (!response.ok) {
     throw new Error(`Failed to fetch arrivals: ${response.status}`)
@@ -70,9 +68,7 @@ export async function fetchTflArrivals(stationId) {
         const childArrivals = await Promise.all(
           childIds.map(async (childId) => {
             try {
-              const childResponse = await fetch(
-                `${TFL_BASE_URL}/StopPoint/${childId}/Arrivals`
-              )
+              const childResponse = await fetch(`${TFL_BASE_URL}/StopPoint/${childId}/Arrivals`)
               if (childResponse.ok) {
                 return childResponse.json()
               }
@@ -125,9 +121,7 @@ function extractCallingPoints(service) {
 // Fetch National Rail departures via Huxley 2
 export async function fetchNationalRailDepartures(crsCode) {
   // Use expand=true to get calling points for intermediate station filtering
-  const response = await fetch(
-    `${HUXLEY_BASE_URL}/departures/${crsCode}/20?expand=true`
-  )
+  const response = await fetch(`${HUXLEY_BASE_URL}/departures/${crsCode}/20?expand=true`)
 
   if (!response.ok) {
     throw new Error(`Failed to fetch National Rail departures: ${response.status}`)
@@ -204,9 +198,7 @@ export async function searchTflStations(query) {
 
 // Search National Rail stations via Huxley 2
 export async function searchNationalRailStations(query) {
-  const response = await fetch(
-    `${HUXLEY_BASE_URL}/crs/${encodeURIComponent(query)}`
-  )
+  const response = await fetch(`${HUXLEY_BASE_URL}/crs/${encodeURIComponent(query)}`)
 
   if (!response.ok) {
     // Huxley returns 404 for no matches
@@ -247,7 +239,10 @@ export async function searchStations(query) {
 }
 
 // Filter arrivals based on configuration and calculate current timeToStation
-export function filterArrivals(arrivals, { minMinutes = 0, maxMinutes = 60, destinationFilter = '', destinations = null }) {
+export function filterArrivals(
+  arrivals,
+  { minMinutes = 0, maxMinutes = 60, destinationFilter = '', destinations = null }
+) {
   const minSeconds = minMinutes * 60
   const maxSeconds = maxMinutes * 60
   const now = Date.now()
@@ -275,7 +270,7 @@ export function filterArrivals(arrivals, { minMinutes = 0, maxMinutes = 60, dest
 
       // Filter by destinations array (new format) - takes precedence
       if (destinations && destinations.length > 0) {
-        const matchesAny = destinations.some(dest => {
+        const matchesAny = destinations.some((dest) => {
           const destName = dest.name.toLowerCase()
           const destCrs = dest.crs?.toLowerCase()
 
@@ -287,9 +282,10 @@ export function filterArrivals(arrivals, { minMinutes = 0, maxMinutes = 60, dest
 
           // Check calling points (National Rail only)
           const callingPoints = arrival.callingPoints || []
-          return callingPoints.some(point =>
-            point.toLowerCase().includes(destName) ||
-            (destCrs && point.toLowerCase().includes(destCrs))
+          return callingPoints.some(
+            (point) =>
+              point.toLowerCase().includes(destName) ||
+              (destCrs && point.toLowerCase().includes(destCrs))
           )
         })
 
@@ -305,8 +301,8 @@ export function filterArrivals(arrivals, { minMinutes = 0, maxMinutes = 60, dest
 
         // Check calling points (intermediate stations)
         const callingPoints = arrival.callingPoints || []
-        const matchesCallingPoint = callingPoints.some(
-          (point) => point.toLowerCase().includes(filter)
+        const matchesCallingPoint = callingPoints.some((point) =>
+          point.toLowerCase().includes(filter)
         )
 
         if (!matchesDestination && !matchesCallingPoint) {

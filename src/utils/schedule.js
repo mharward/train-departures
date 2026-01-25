@@ -31,7 +31,7 @@ export function isStationVisible(schedule, now = new Date()) {
  * @returns {Array} Filtered array of visible stations
  */
 export function filterVisibleStations(stations, now = new Date()) {
-  return stations.filter(s => isStationVisible(s.schedule, now))
+  return stations.filter((s) => isStationVisible(s.schedule, now))
 }
 
 /**

@@ -7,7 +7,7 @@ function getFilterSummary(station) {
 
   // Show destinations from new array format
   if (station.destinations && station.destinations.length > 0) {
-    const names = station.destinations.map(d => d.name)
+    const names = station.destinations.map((d) => d.name)
     if (names.length <= 2) {
       parts.push(`to ${names.join(', ')}`)
     } else {
@@ -35,33 +35,31 @@ export function StationCard({ station, departures, error, showPlatform }) {
     <div className="station-card">
       <div className="station-header">
         <TransportIcon type={station.type} size={24} />
-        <h2 className="station-name" title={station.name}>{station.name}</h2>
+        <h2 className="station-name" title={station.name}>
+          {station.name}
+        </h2>
         {filterSummary && (
-          <span className="filter-summary" title={filterSummary}>{filterSummary}</span>
+          <span className="filter-summary" title={filterSummary}>
+            {filterSummary}
+          </span>
         )}
       </div>
 
       <div className="departures-list">
-        {error && (
-          <div className="error-message">
-            Unable to load departures
-          </div>
-        )}
+        {error && <div className="error-message">Unable to load departures</div>}
 
-        {!error && !hasDepartures && (
-          <div className="no-departures">
-            No upcoming departures
-          </div>
-        )}
+        {!error && !hasDepartures && <div className="no-departures">No upcoming departures</div>}
 
         {hasDepartures &&
-          departures.slice(0, 8).map((departure, index) => (
-            <DepartureRow
-              key={departure.id || `${departure.destinationName}-${index}`}
-              departure={departure}
-              showPlatform={showPlatform}
-            />
-          ))}
+          departures
+            .slice(0, 8)
+            .map((departure, index) => (
+              <DepartureRow
+                key={departure.id || `${departure.destinationName}-${index}`}
+                departure={departure}
+                showPlatform={showPlatform}
+              />
+            ))}
       </div>
     </div>
   )

@@ -34,14 +34,18 @@ function formatDays(days) {
   const weekdays = [1, 2, 3, 4, 5]
   const weekend = [0, 6]
 
-  const isWeekdays = weekdays.every(d => days.includes(d)) && !days.includes(0) && !days.includes(6)
-  const isWeekend = weekend.every(d => days.includes(d)) && days.length === 2
+  const isWeekdays =
+    weekdays.every((d) => days.includes(d)) && !days.includes(0) && !days.includes(6)
+  const isWeekend = weekend.every((d) => days.includes(d)) && days.length === 2
 
   if (isWeekdays) return 'Mon-Fri'
   if (isWeekend) return 'Sat-Sun'
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  return days.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')
+  return days
+    .sort((a, b) => a - b)
+    .map((d) => dayNames[d])
+    .join(', ')
 }
 
 // Generate filter summary for display
@@ -50,7 +54,7 @@ function getFilterSummary(station) {
 
   // Show destinations from new array format
   if (station.destinations && station.destinations.length > 0) {
-    const names = station.destinations.map(d => d.name)
+    const names = station.destinations.map((d) => d.name)
     if (names.length <= 2) {
       parts.push(`to ${names.join(', ')}`)
     } else {
@@ -173,10 +177,10 @@ export function Settings({
                   <li key={station.id} className="search-result-item">
                     <TransportIcon type={station.type} size={24} />
                     <div className="station-result-info">
-                      <span className="station-result-name" title={station.name}>{station.name}</span>
-                      <span className="station-result-modes">
-                        {formatModes(station)}
+                      <span className="station-result-name" title={station.name}>
+                        {station.name}
                       </span>
+                      <span className="station-result-modes">{formatModes(station)}</span>
                     </div>
                     <button
                       className="add-station-button"
@@ -210,9 +214,14 @@ export function Settings({
                       <div className="station-display">
                         <TransportIcon type={station.type} size={24} />
                         <div className="station-info">
-                          <span className="station-name" title={station.name}>{station.name}</span>
+                          <span className="station-name" title={station.name}>
+                            {station.name}
+                          </span>
                           {getFilterSummary(station) && (
-                            <span className="station-filter-summary" title={getFilterSummary(station)}>
+                            <span
+                              className="station-filter-summary"
+                              title={getFilterSummary(station)}
+                            >
                               {getFilterSummary(station)}
                             </span>
                           )}
@@ -249,9 +258,7 @@ export function Settings({
                   type="checkbox"
                   id="autoRefresh"
                   checked={config.autoRefresh}
-                  onChange={(e) =>
-                    onUpdateSettings({ autoRefresh: e.target.checked })
-                  }
+                  onChange={(e) => onUpdateSettings({ autoRefresh: e.target.checked })}
                 />
                 Auto-refresh departures
               </label>
@@ -281,9 +288,7 @@ export function Settings({
                   type="checkbox"
                   id="showPlatform"
                   checked={config.showPlatform}
-                  onChange={(e) =>
-                    onUpdateSettings({ showPlatform: e.target.checked })
-                  }
+                  onChange={(e) => onUpdateSettings({ showPlatform: e.target.checked })}
                 />
                 Show platform numbers
               </label>
@@ -310,18 +315,10 @@ export function Settings({
 
 function StationEditForm({ station, onSave, onCancel }) {
   const [minMinutes, setMinMinutes] = useState(station.minMinutes || 0)
-  const [scheduleEnabled, setScheduleEnabled] = useState(
-    station.schedule?.enabled || false
-  )
-  const [startTime, setStartTime] = useState(
-    station.schedule?.startTime || '04:00'
-  )
-  const [endTime, setEndTime] = useState(
-    station.schedule?.endTime || '12:00'
-  )
-  const [days, setDays] = useState(
-    station.schedule?.days || [1, 2, 3, 4, 5]
-  )
+  const [scheduleEnabled, setScheduleEnabled] = useState(station.schedule?.enabled || false)
+  const [startTime, setStartTime] = useState(station.schedule?.startTime || '04:00')
+  const [endTime, setEndTime] = useState(station.schedule?.endTime || '12:00')
+  const [days, setDays] = useState(station.schedule?.days || [1, 2, 3, 4, 5])
 
   // Destination picker state
   const [destinations, setDestinations] = useState(station.destinations || [])
@@ -355,7 +352,7 @@ function StationEditForm({ station, onSave, onCancel }) {
 
   const toggleDay = (dayIndex) => {
     if (days.includes(dayIndex)) {
-      setDays(days.filter(d => d !== dayIndex))
+      setDays(days.filter((d) => d !== dayIndex))
     } else {
       setDays([...days, dayIndex].sort((a, b) => a - b))
     }
@@ -374,20 +371,23 @@ function StationEditForm({ station, onSave, onCancel }) {
 
   const addDestination = (result) => {
     // Check if already added
-    if (destinations.some(d => d.id === result.id)) {
+    if (destinations.some((d) => d.id === result.id)) {
       return
     }
-    setDestinations([...destinations, {
-      id: result.id,
-      name: result.name,
-      crs: result.crs || null,
-    }])
+    setDestinations([
+      ...destinations,
+      {
+        id: result.id,
+        name: result.name,
+        crs: result.crs || null,
+      },
+    ])
     setDestQuery('')
     setDestResults([])
   }
 
   const removeDestination = (destId) => {
-    setDestinations(destinations.filter(d => d.id !== destId))
+    setDestinations(destinations.filter((d) => d.id !== destId))
   }
 
   const handleSubmit = (e) => {
@@ -416,7 +416,9 @@ function StationEditForm({ station, onSave, onCancel }) {
     <form className="station-edit-form" onSubmit={handleSubmit}>
       <div className="edit-form-header">
         <TransportIcon type={station.type} size={20} />
-        <span className="edit-form-station-name" title={station.name}>{station.name}</span>
+        <span className="edit-form-station-name" title={station.name}>
+          {station.name}
+        </span>
       </div>
 
       <div className="edit-field destination-picker">
@@ -425,7 +427,7 @@ function StationEditForm({ station, onSave, onCancel }) {
         {/* Selected destinations */}
         {destinations.length > 0 ? (
           <div className="destination-chips">
-            {destinations.map(dest => (
+            {destinations.map((dest) => (
               <span key={dest.id} className="destination-chip">
                 {dest.name}
                 <button
@@ -461,18 +463,18 @@ function StationEditForm({ station, onSave, onCancel }) {
               <li key={result.id} className="destination-result-item">
                 <TransportIcon type={result.type} size={18} />
                 <div className="destination-result-info">
-                  <span className="destination-result-name" title={result.name}>{result.name}</span>
-                  {result.crs && (
-                    <span className="destination-result-crs">{result.crs}</span>
-                  )}
+                  <span className="destination-result-name" title={result.name}>
+                    {result.name}
+                  </span>
+                  {result.crs && <span className="destination-result-crs">{result.crs}</span>}
                 </div>
                 <button
                   type="button"
                   className="add-destination-button"
                   onClick={() => addDestination(result)}
-                  disabled={destinations.some(d => d.id === result.id)}
+                  disabled={destinations.some((d) => d.id === result.id)}
                 >
-                  {destinations.some(d => d.id === result.id) ? 'Added' : 'Add'}
+                  {destinations.some((d) => d.id === result.id) ? 'Added' : 'Add'}
                 </button>
               </li>
             ))}
