@@ -10,12 +10,35 @@ const defaultConfig = {
   theme: 'system',
 }
 
+// Migrate station config from old format to new format
+function migrateStation(station) {
+  const migrated = { ...station }
+
+  // Migrate old destinationFilter string to destinations array
+  if (!migrated.destinations) {
+    if (migrated.destinationFilter && migrated.destinationFilter.trim()) {
+      migrated.destinations = [{
+        id: `text-${migrated.destinationFilter}`,
+        name: migrated.destinationFilter.trim(),
+        crs: null,
+      }]
+    } else {
+      migrated.destinations = []
+    }
+  }
+
+  return migrated
+}
+
 export function useConfig() {
   const [config, setConfig] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
-        return { ...defaultConfig, ...JSON.parse(stored) }
+        const parsed = JSON.parse(stored)
+        // Migrate stations to new format
+        const stations = (parsed.stations || []).map(migrateStation)
+        return { ...defaultConfig, ...parsed, stations }
       }
     } catch (e) {
       console.error('Failed to load config from localStorage:', e)
@@ -45,7 +68,8 @@ export function useConfig() {
           crs: station.crs || null, // CRS code for National Rail
           minMinutes: station.minMinutes || 0, // Minimum minutes to departure
           maxMinutes: station.maxMinutes || 60, // Maximum minutes to departure
-          destinationFilter: station.destinationFilter || '', // Filter by destination name
+          destinationFilter: station.destinationFilter || '', // Legacy: filter by destination name
+          destinations: station.destinations || [], // Array of destination stations to filter by
         },
       ],
     }))

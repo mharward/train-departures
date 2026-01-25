@@ -247,7 +247,7 @@ export async function searchStations(query) {
 }
 
 // Filter arrivals based on configuration and calculate current timeToStation
-export function filterArrivals(arrivals, { minMinutes = 0, maxMinutes = 60, destinationFilter = '' }) {
+export function filterArrivals(arrivals, { minMinutes = 0, maxMinutes = 60, destinationFilter = '', destinations = null }) {
   const minSeconds = minMinutes * 60
   const maxSeconds = maxMinutes * 60
   const now = Date.now()
@@ -273,8 +273,30 @@ export function filterArrivals(arrivals, { minMinutes = 0, maxMinutes = 60, dest
         return false
       }
 
-      // Filter by destination or calling points (case-insensitive partial match)
-      if (destinationFilter && destinationFilter.trim()) {
+      // Filter by destinations array (new format) - takes precedence
+      if (destinations && destinations.length > 0) {
+        const matchesAny = destinations.some(dest => {
+          const destName = dest.name.toLowerCase()
+          const destCrs = dest.crs?.toLowerCase()
+
+          // Check final destination (name or CRS)
+          const destination = (arrival.destinationName || '').toLowerCase()
+          if (destination.includes(destName) || (destCrs && destination.includes(destCrs))) {
+            return true
+          }
+
+          // Check calling points (National Rail only)
+          const callingPoints = arrival.callingPoints || []
+          return callingPoints.some(point =>
+            point.toLowerCase().includes(destName) ||
+            (destCrs && point.toLowerCase().includes(destCrs))
+          )
+        })
+
+        if (!matchesAny) return false
+      }
+      // Legacy: filter by destination string (case-insensitive partial match)
+      else if (destinationFilter && destinationFilter.trim()) {
         const filter = destinationFilter.toLowerCase().trim()
 
         // Check final destination

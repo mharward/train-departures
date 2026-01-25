@@ -1,10 +1,21 @@
 import { DepartureRow } from './DepartureRow'
+import { TransportIcon } from './TransportIcon'
 
 // Generate filter summary for the header
 function getFilterSummary(station) {
   const parts = []
 
-  if (station.destinationFilter && station.destinationFilter.trim()) {
+  // Show destinations from new array format
+  if (station.destinations && station.destinations.length > 0) {
+    const names = station.destinations.map(d => d.name)
+    if (names.length <= 2) {
+      parts.push(`to ${names.join(', ')}`)
+    } else {
+      parts.push(`to ${names[0]} +${names.length - 1} more`)
+    }
+  }
+  // Legacy: show old destination filter
+  else if (station.destinationFilter && station.destinationFilter.trim()) {
     parts.push(`to ${station.destinationFilter}`)
   }
 
@@ -23,12 +34,11 @@ export function StationCard({ station, departures, error, showPlatform }) {
   return (
     <div className="station-card">
       <div className="station-header">
-        <div className="station-title">
-          <h2 className="station-name">{station.name}</h2>
-          {filterSummary && (
-            <span className="filter-summary">{filterSummary}</span>
-          )}
-        </div>
+        <TransportIcon type={station.type} size={24} />
+        <h2 className="station-name">{station.name}</h2>
+        {filterSummary && (
+          <span className="filter-summary">{filterSummary}</span>
+        )}
       </div>
 
       <div className="departures-list">
@@ -47,7 +57,7 @@ export function StationCard({ station, departures, error, showPlatform }) {
         {hasDepartures &&
           departures.slice(0, 8).map((departure, index) => (
             <DepartureRow
-              key={`${departure.vehicleId || departure.id || index}-${departure.timeToStation}`}
+              key={departure.id || `${departure.destinationName}-${index}`}
               departure={departure}
               showPlatform={showPlatform}
             />

@@ -31,6 +31,7 @@ export function useDepartures(stations, { autoRefresh = false, refreshInterval =
           minMinutes: station.minMinutes || 0,
           maxMinutes: station.maxMinutes || 60,
           destinationFilter: station.destinationFilter || '',
+          destinations: station.destinations || null,
         })
       }
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { searchStations } from '../utils/api'
 import { getDefaultSchedule } from '../utils/schedule'
+import { TransportIcon } from './TransportIcon'
 
 // Format modes for display - only show modes we can provide data for
 function formatModes(station) {
@@ -47,7 +48,17 @@ function formatDays(days) {
 function getFilterSummary(station) {
   const parts = []
 
-  if (station.destinationFilter && station.destinationFilter.trim()) {
+  // Show destinations from new array format
+  if (station.destinations && station.destinations.length > 0) {
+    const names = station.destinations.map(d => d.name)
+    if (names.length <= 2) {
+      parts.push(`to ${names.join(', ')}`)
+    } else {
+      parts.push(`to ${names[0]} +${names.length - 1} more`)
+    }
+  }
+  // Legacy: show old destination filter
+  else if (station.destinationFilter && station.destinationFilter.trim()) {
     parts.push(`to ${station.destinationFilter}`)
   }
 
@@ -111,6 +122,7 @@ export function Settings({
         minMinutes: 0,
         maxMinutes: 60,
         destinationFilter: '',
+        destinations: [],
       })
       setSearchQuery('')
       setSearchResults([])
@@ -159,6 +171,7 @@ export function Settings({
               <ul className="search-results">
                 {searchResults.map((station) => (
                   <li key={station.id} className="search-result-item">
+                    <TransportIcon type={station.type} size={24} />
                     <div className="station-result-info">
                       <span className="station-result-name">{station.name}</span>
                       <span className="station-result-modes">
@@ -195,6 +208,7 @@ export function Settings({
                       />
                     ) : (
                       <div className="station-display">
+                        <TransportIcon type={station.type} size={24} />
                         <div className="station-info">
                           <span className="station-name">{station.name}</span>
                           {getFilterSummary(station) && (
@@ -296,9 +310,6 @@ export function Settings({
 
 function StationEditForm({ station, onSave, onCancel }) {
   const [minMinutes, setMinMinutes] = useState(station.minMinutes || 0)
-  const [destinationFilter, setDestinationFilter] = useState(
-    station.destinationFilter || ''
-  )
   const [scheduleEnabled, setScheduleEnabled] = useState(
     station.schedule?.enabled || false
   )
@@ -312,7 +323,35 @@ function StationEditForm({ station, onSave, onCancel }) {
     station.schedule?.days || [1, 2, 3, 4, 5]
   )
 
+  // Destination picker state
+  const [destinations, setDestinations] = useState(station.destinations || [])
+  const [destQuery, setDestQuery] = useState('')
+  const [destResults, setDestResults] = useState([])
+  const [destSearching, setDestSearching] = useState(false)
+
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+  // Debounced destination search
+  useEffect(() => {
+    if (!destQuery || destQuery.length < 2) {
+      setDestResults([])
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      setDestSearching(true)
+      try {
+        const results = await searchStations(destQuery)
+        setDestResults(results)
+      } catch (error) {
+        console.error('Destination search error:', error)
+        setDestResults([])
+      }
+      setDestSearching(false)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [destQuery])
 
   const toggleDay = (dayIndex) => {
     if (days.includes(dayIndex)) {
@@ -333,11 +372,30 @@ function StationEditForm({ station, onSave, onCancel }) {
     }
   }
 
+  const addDestination = (result) => {
+    // Check if already added
+    if (destinations.some(d => d.id === result.id)) {
+      return
+    }
+    setDestinations([...destinations, {
+      id: result.id,
+      name: result.name,
+      crs: result.crs || null,
+    }])
+    setDestQuery('')
+    setDestResults([])
+  }
+
+  const removeDestination = (destId) => {
+    setDestinations(destinations.filter(d => d.id !== destId))
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const updates = {
       minMinutes: parseInt(minMinutes, 10) || 0,
-      destinationFilter: destinationFilter.trim(),
+      destinations,
+      destinationFilter: '', // Clear legacy field when saving
     }
 
     if (scheduleEnabled) {
@@ -356,21 +414,70 @@ function StationEditForm({ station, onSave, onCancel }) {
 
   return (
     <form className="station-edit-form" onSubmit={handleSubmit}>
-      <div className="edit-field">
-        <label htmlFor={`dest-${station.id}`}>
-          Destination filter
-        </label>
-        <input
-          type="text"
-          id={`dest-${station.id}`}
-          placeholder="e.g., London Bridge"
-          value={destinationFilter}
-          onChange={(e) => setDestinationFilter(e.target.value)}
-        />
+      <div className="edit-field destination-picker">
+        <label>Filter by destination (optional)</label>
+
+        {/* Selected destinations */}
+        {destinations.length > 0 ? (
+          <div className="destination-chips">
+            {destinations.map(dest => (
+              <span key={dest.id} className="destination-chip">
+                {dest.name}
+                <button
+                  type="button"
+                  className="chip-remove"
+                  onClick={() => removeDestination(dest.id)}
+                  aria-label={`Remove ${dest.name}`}
+                >
+                  &times;
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="destination-empty">Any destination</div>
+        )}
+
+        {/* Destination search */}
+        <div className="destination-search">
+          <input
+            type="text"
+            placeholder="Search for a destination..."
+            value={destQuery}
+            onChange={(e) => setDestQuery(e.target.value)}
+          />
+          {destSearching && <span className="search-loading">Searching...</span>}
+        </div>
+
+        {/* Search results */}
+        {destResults.length > 0 && (
+          <ul className="destination-results">
+            {destResults.map((result) => (
+              <li key={result.id} className="destination-result-item">
+                <TransportIcon type={result.type} size={18} />
+                <div className="destination-result-info">
+                  <span className="destination-result-name">{result.name}</span>
+                  {result.crs && (
+                    <span className="destination-result-crs">{result.crs}</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="add-destination-button"
+                  onClick={() => addDestination(result)}
+                  disabled={destinations.some(d => d.id === result.id)}
+                >
+                  {destinations.some(d => d.id === result.id) ? 'Added' : 'Add'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <span className="field-hint">
           {station.type === 'national-rail'
             ? 'Matches final destination or any stop along the route'
-            : 'Matches final destination only (Tube lines only match terminus)'}
+            : 'Matches final destination only'}
         </span>
       </div>
 
