@@ -12,7 +12,7 @@ A React + Vite app showing real-time train departures from nearby stations. Desi
 
 ## Features
 
-- Real-time departure information with auto-refresh
+- Live countdown timers (auto-refresh available in settings)
 - Walk time buffer (hide trains you can't reach in time)
 - Destination filtering
 - Official line/operator colors
@@ -43,7 +43,7 @@ Click the "Settings" button to:
 1. **Add stations** - Search for stations by name (supports both National Rail and TfL stations)
 2. **Set walk time** - Minutes it takes you to reach the station (departures sooner than this are hidden)
 3. **Filter destinations** - Show only trains going to a specific destination
-4. **Adjust refresh interval** - How often to fetch new data (default: 30 seconds)
+4. **Enable auto-refresh** - Optionally re-fetch data at a configurable interval
 5. **Toggle platform display** - Show/hide platform numbers
 6. **Switch theme** - Dark or light mode
 
