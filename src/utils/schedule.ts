@@ -1,10 +1,9 @@
+import type { Schedule, Station } from '../types'
+
 /**
  * Check if a station should be visible based on its schedule
- * @param {Object|null} schedule - The station's schedule configuration
- * @param {Date} now - Current time (default: new Date())
- * @returns {boolean} Whether the station should be visible
  */
-export function isStationVisible(schedule, now = new Date()) {
+export function isStationVisible(schedule: Schedule | null | undefined, now: Date = new Date()): boolean {
   if (!schedule || !schedule.enabled) return true
 
   // Check day of week
@@ -14,8 +13,8 @@ export function isStationVisible(schedule, now = new Date()) {
   const current = now.getHours() * 60 + now.getMinutes()
   const [startH, startM] = schedule.startTime.split(':').map(Number)
   const [endH, endM] = schedule.endTime.split(':').map(Number)
-  const start = startH * 60 + startM
-  const end = endH * 60 + endM
+  const start = (startH ?? 0) * 60 + (startM ?? 0)
+  const end = (endH ?? 0) * 60 + (endM ?? 0)
 
   if (end < start) {
     // Overnight: visible if after start OR before end
@@ -26,19 +25,15 @@ export function isStationVisible(schedule, now = new Date()) {
 
 /**
  * Filter stations to only those currently visible
- * @param {Array} stations - Array of station configurations
- * @param {Date} now - Current time (default: new Date())
- * @returns {Array} Filtered array of visible stations
  */
-export function filterVisibleStations(stations, now = new Date()) {
+export function filterVisibleStations(stations: Station[], now: Date = new Date()): Station[] {
   return stations.filter((s) => isStationVisible(s.schedule, now))
 }
 
 /**
  * Get default schedule configuration
- * @returns {Object} Default schedule (Mon-Fri 04:00-12:00)
  */
-export function getDefaultSchedule() {
+export function getDefaultSchedule(): Schedule {
   return {
     enabled: true,
     startTime: '04:00',

@@ -1,5 +1,9 @@
+interface IconProps {
+  size?: number
+}
+
 // TfL Roundel icon
-function TflIcon({ size = 20 }) {
+function TflIcon({ size = 20 }: IconProps) {
   return (
     <svg
       width={size}
@@ -20,7 +24,7 @@ function TflIcon({ size = 20 }) {
 }
 
 // National Rail double arrow icon
-function NationalRailIcon({ size = 20 }) {
+function NationalRailIcon({ size = 20 }: IconProps) {
   return (
     <svg
       width={size}
@@ -37,7 +41,12 @@ function NationalRailIcon({ size = 20 }) {
   )
 }
 
-export function TransportIcon({ type, size = 20 }) {
+interface TransportIconProps {
+  type: 'tfl' | 'national-rail'
+  size?: number
+}
+
+export function TransportIcon({ type, size = 20 }: TransportIconProps) {
   if (type === 'national-rail') {
     return <NationalRailIcon size={size} />
   }

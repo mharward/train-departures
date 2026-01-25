@@ -35,7 +35,7 @@ function App() {
 
   // Apply theme to document
   useEffect(() => {
-    const applyTheme = (theme) => {
+    const applyTheme = (theme: string) => {
       if (theme === 'system') {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
         document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light')

@@ -1,5 +1,5 @@
 // Official TfL line colors
-export const lineColors = {
+export const lineColors: Record<string, string> = {
   // Tube lines
   bakerloo: '#B36305',
   central: '#E32017',
@@ -52,7 +52,7 @@ export const lineColors = {
 }
 
 // Mode name to display name mapping
-export const modeDisplayNames = {
+export const modeDisplayNames: Record<string, string> = {
   tube: 'Tube',
   dlr: 'DLR',
   overground: 'Overground',
@@ -62,16 +62,16 @@ export const modeDisplayNames = {
 }
 
 // Get color for a line/mode
-export function getLineColor(lineId, modeName) {
+export function getLineColor(lineId: string | undefined, modeName: string | undefined): string {
   // Try exact line ID match first
   const normalizedLineId = lineId?.toLowerCase().replace(/\s+/g, '-')
-  if (lineColors[normalizedLineId]) {
+  if (normalizedLineId && lineColors[normalizedLineId]) {
     return lineColors[normalizedLineId]
   }
 
   // Fall back to mode-based color
   const normalizedMode = modeName?.toLowerCase().replace(/\s+/g, '-')
-  if (lineColors[normalizedMode]) {
+  if (normalizedMode && lineColors[normalizedMode]) {
     return lineColors[normalizedMode]
   }
 
@@ -79,7 +79,7 @@ export function getLineColor(lineId, modeName) {
 }
 
 // Get text color (white or black) based on background for contrast
-export function getContrastColor(bgColor) {
+export function getContrastColor(bgColor: string): string {
   // Convert hex to RGB
   const hex = bgColor.replace('#', '')
   const r = parseInt(hex.substr(0, 2), 16)

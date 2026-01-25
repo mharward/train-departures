@@ -1,5 +1,19 @@
 import { useState, useEffect } from 'react'
 import { StationCard } from './StationCard'
+import type { Station, DeparturesMap, ErrorsMap } from '../types'
+
+interface DashboardProps {
+  stations: Station[]
+  departures: DeparturesMap
+  errors: ErrorsMap
+  loading: boolean
+  lastUpdated: Date | null
+  countdown: number
+  autoRefresh: boolean
+  showPlatform: boolean
+  onRefresh: () => void
+  onOpenSettings: () => void
+}
 
 export function Dashboard({
   stations,
@@ -12,7 +26,7 @@ export function Dashboard({
   showPlatform,
   onRefresh,
   onOpenSettings,
-}) {
+}: DashboardProps) {
   const [elapsed, setElapsed] = useState(0)
 
   // Update elapsed time every second
@@ -29,13 +43,13 @@ export function Dashboard({
     return () => clearInterval(interval)
   }, [lastUpdated])
 
-  const formatElapsed = (seconds) => {
+  const formatElapsed = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s ago`
     const minutes = Math.floor(seconds / 60)
     return `${minutes}m ago`
   }
 
-  const formatTime = (date) => {
+  const formatTime = (date: Date | null): string => {
     if (!date) return ''
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }

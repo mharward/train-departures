@@ -6,6 +6,7 @@ import {
   findRailChildStops,
   formatMinutes,
 } from '../utils/api'
+import type { Arrival, TflStopPoint, NationalRailService } from '../types'
 
 describe('timeToSeconds', () => {
   beforeEach(() => {
@@ -87,13 +88,16 @@ describe('formatMinutes', () => {
 
 describe('extractCallingPoints', () => {
   it('returns empty array for service with no calling points', () => {
-    expect(extractCallingPoints({})).toEqual([])
-    expect(extractCallingPoints({ subsequentCallingPoints: null })).toEqual([])
-    expect(extractCallingPoints({ subsequentCallingPoints: [] })).toEqual([])
+    expect(extractCallingPoints({} as NationalRailService)).toEqual([])
+    expect(extractCallingPoints({ subsequentCallingPoints: undefined } as unknown as NationalRailService)).toEqual([])
+    expect(extractCallingPoints({ subsequentCallingPoints: [] } as unknown as NationalRailService)).toEqual([])
   })
 
   it('extracts calling points from a single group', () => {
-    const service = {
+    const service: NationalRailService = {
+      serviceID: '1',
+      std: '10:00',
+      etd: 'On time',
       subsequentCallingPoints: [
         {
           callingPoint: [
@@ -108,7 +112,10 @@ describe('extractCallingPoints', () => {
   })
 
   it('extracts calling points from multiple groups', () => {
-    const service = {
+    const service: NationalRailService = {
+      serviceID: '1',
+      std: '10:00',
+      etd: 'On time',
       subsequentCallingPoints: [
         {
           callingPoint: [{ locationName: 'Station A' }, { locationName: 'Station B' }],
@@ -127,10 +134,13 @@ describe('extractCallingPoints', () => {
   })
 
   it('filters out empty location names', () => {
-    const service = {
+    const service: NationalRailService = {
+      serviceID: '1',
+      std: '10:00',
+      etd: 'On time',
       subsequentCallingPoints: [
         {
-          callingPoint: [{ locationName: 'Station A' }, { locationName: '' }, { locationName: null }],
+          callingPoint: [{ locationName: 'Station A' }, { locationName: '' }, { locationName: undefined }],
         },
       ],
     }
@@ -138,8 +148,11 @@ describe('extractCallingPoints', () => {
   })
 
   it('handles missing callingPoint array in group', () => {
-    const service = {
-      subsequentCallingPoints: [{ callingPoint: null }, { callingPoint: [{ locationName: 'Station A' }] }],
+    const service: NationalRailService = {
+      serviceID: '1',
+      std: '10:00',
+      etd: 'On time',
+      subsequentCallingPoints: [{ callingPoint: undefined }, { callingPoint: [{ locationName: 'Station A' }] }],
     }
     expect(extractCallingPoints(service)).toEqual(['Station A'])
   })
@@ -152,7 +165,7 @@ describe('findRailChildStops', () => {
   })
 
   it('returns empty array for station with no children', () => {
-    const station = {
+    const station: TflStopPoint = {
       naptanId: 'HUB123',
       stopType: 'TransportInterchange',
       modes: ['tube'],
@@ -161,7 +174,7 @@ describe('findRailChildStops', () => {
   })
 
   it('finds rail child stops with TfL modes', () => {
-    const station = {
+    const station: TflStopPoint = {
       naptanId: 'HUB123',
       stopType: 'TransportInterchange',
       modes: ['tube'],
@@ -177,7 +190,7 @@ describe('findRailChildStops', () => {
   })
 
   it('excludes TransportInterchange stops', () => {
-    const station = {
+    const station: TflStopPoint = {
       naptanId: 'HUB123',
       stopType: 'TransportInterchange',
       modes: ['tube'],
@@ -192,7 +205,7 @@ describe('findRailChildStops', () => {
   })
 
   it('excludes non-rail modes', () => {
-    const station = {
+    const station: TflStopPoint = {
       naptanId: 'HUB123',
       stopType: 'TransportInterchange',
       modes: ['bus', 'tube'],
@@ -207,7 +220,7 @@ describe('findRailChildStops', () => {
   })
 
   it('finds nested children recursively', () => {
-    const station = {
+    const station: TflStopPoint = {
       naptanId: 'HUB123',
       stopType: 'TransportInterchange',
       modes: ['tube'],
@@ -227,7 +240,7 @@ describe('findRailChildStops', () => {
   })
 
   it('deduplicates child IDs', () => {
-    const station = {
+    const station: TflStopPoint = {
       naptanId: 'HUB123',
       stopType: 'TransportInterchange',
       modes: ['tube'],
@@ -249,11 +262,16 @@ describe('findRailChildStops', () => {
 describe('filterArrivals', () => {
   const now = Date.now()
 
-  const createArrival = (overrides = {}) => ({
+  const createArrival = (overrides: Partial<Arrival> = {}): Arrival => ({
     id: 'test-1',
     expectedDeparture: now + 5 * 60 * 1000, // 5 minutes from now
     destinationName: 'Test Station',
     callingPoints: [],
+    lineName: 'Test Line',
+    lineId: 'test',
+    modeName: 'tube',
+    status: null,
+    source: 'tfl',
     ...overrides,
   })
 
@@ -264,7 +282,7 @@ describe('filterArrivals', () => {
   it('calculates timeToStation for each arrival', () => {
     const arrivals = [createArrival({ expectedDeparture: now + 300 * 1000 })]
     const result = filterArrivals(arrivals, {})
-    expect(result[0].timeToStation).toBeCloseTo(300, -1)
+    expect(result[0]?.timeToStation).toBeCloseTo(300, -1)
   })
 
   it('filters out departed trains (negative timeToStation)', () => {
@@ -274,7 +292,7 @@ describe('filterArrivals', () => {
     ]
     const result = filterArrivals(arrivals, {})
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe('future')
+    expect(result[0]?.id).toBe('future')
   })
 
   it('filters by minMinutes', () => {
@@ -284,7 +302,7 @@ describe('filterArrivals', () => {
     ]
     const result = filterArrivals(arrivals, { minMinutes: 5 })
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe('ok')
+    expect(result[0]?.id).toBe('ok')
   })
 
   it('filters by maxMinutes', () => {
@@ -294,7 +312,7 @@ describe('filterArrivals', () => {
     ]
     const result = filterArrivals(arrivals, { maxMinutes: 60 })
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe('ok')
+    expect(result[0]?.id).toBe('ok')
   })
 
   it('applies both min and max filters', () => {
@@ -305,7 +323,7 @@ describe('filterArrivals', () => {
     ]
     const result = filterArrivals(arrivals, { minMinutes: 5, maxMinutes: 30 })
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe('ok')
+    expect(result[0]?.id).toBe('ok')
   })
 
   describe('destination filtering with destinations array', () => {
@@ -318,7 +336,7 @@ describe('filterArrivals', () => {
         destinations: [{ id: '1', name: 'victoria', crs: null }],
       })
       expect(result).toHaveLength(1)
-      expect(result[0].id).toBe('match')
+      expect(result[0]?.id).toBe('match')
     })
 
     it('filters by CRS code', () => {
@@ -330,7 +348,7 @@ describe('filterArrivals', () => {
         destinations: [{ id: '1', name: 'Victoria', crs: 'VIC' }],
       })
       expect(result).toHaveLength(1)
-      expect(result[0].id).toBe('match')
+      expect(result[0]?.id).toBe('match')
     })
 
     it('matches calling points for National Rail', () => {
@@ -350,7 +368,7 @@ describe('filterArrivals', () => {
         destinations: [{ id: '1', name: 'Gatwick', crs: null }],
       })
       expect(result).toHaveLength(1)
-      expect(result[0].id).toBe('match')
+      expect(result[0]?.id).toBe('match')
     })
 
     it('uses OR logic for multiple destinations', () => {
@@ -385,7 +403,7 @@ describe('filterArrivals', () => {
       ]
       const result = filterArrivals(arrivals, { destinationFilter: 'victoria' })
       expect(result).toHaveLength(1)
-      expect(result[0].id).toBe('match')
+      expect(result[0]?.id).toBe('match')
     })
 
     it('matches calling points with legacy filter', () => {
@@ -417,13 +435,12 @@ describe('filterArrivals', () => {
         destinationFilter: 'Victoria',
       })
       expect(result).toHaveLength(1)
-      expect(result[0].id).toBe('bridge')
+      expect(result[0]?.id).toBe('bridge')
     })
   })
 
   it('handles null/undefined callingPoints gracefully', () => {
     const arrivals = [
-      createArrival({ destinationName: 'Test', callingPoints: null }),
       createArrival({ destinationName: 'Test', callingPoints: undefined }),
     ]
     // Should not throw

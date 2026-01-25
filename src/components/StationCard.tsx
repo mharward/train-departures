@@ -1,9 +1,10 @@
 import { DepartureRow } from './DepartureRow'
 import { TransportIcon } from './TransportIcon'
+import type { Station, FilteredArrival } from '../types'
 
 // Generate filter summary for the header
-function getFilterSummary(station) {
-  const parts = []
+function getFilterSummary(station: Station): string | null {
+  const parts: string[] = []
 
   // Show destinations from new array format
   if (station.destinations && station.destinations.length > 0) {
@@ -27,7 +28,14 @@ function getFilterSummary(station) {
   return parts.length > 0 ? parts.join(', ') : null
 }
 
-export function StationCard({ station, departures, error, showPlatform }) {
+interface StationCardProps {
+  station: Station
+  departures: FilteredArrival[] | undefined
+  error: string | null | undefined
+  showPlatform: boolean
+}
+
+export function StationCard({ station, departures, error, showPlatform }: StationCardProps) {
   const hasDepartures = departures && departures.length > 0
   const filterSummary = getFilterSummary(station)
 

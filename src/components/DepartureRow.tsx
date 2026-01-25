@@ -1,11 +1,17 @@
 import { LineIndicator } from './LineIndicator'
 import { formatMinutes } from '../utils/api'
+import type { FilteredArrival } from '../types'
 
-function formatTime(timestamp) {
+function formatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-export function DepartureRow({ departure, showPlatform }) {
+interface DepartureRowProps {
+  departure: FilteredArrival
+  showPlatform: boolean
+}
+
+export function DepartureRow({ departure, showPlatform }: DepartureRowProps) {
   const minutes = formatMinutes(departure.timeToStation)
   const isDue = minutes === 'Due'
 
@@ -20,9 +26,9 @@ export function DepartureRow({ departure, showPlatform }) {
         <div className="departure-destination">
           <span
             className="destination-name"
-            title={departure.destinationName || departure.towards || 'Unknown'}
+            title={departure.destinationName || 'Unknown'}
           >
-            {departure.destinationName || departure.towards || 'Unknown'}
+            {departure.destinationName || 'Unknown'}
           </span>
           {departure.status === 'Delayed' && <span className="status-badge delayed">Delayed</span>}
         </div>

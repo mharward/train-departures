@@ -1,16 +1,34 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { fetchArrivals, filterArrivals } from '../utils/api'
+import type { Station, Arrival, DeparturesMap, ErrorsMap } from '../types'
 
-export function useDepartures(stations, { autoRefresh = false, refreshInterval = 30 } = {}) {
-  const [departures, setDepartures] = useState({})
+interface UseDeparturesOptions {
+  autoRefresh?: boolean
+  refreshInterval?: number
+}
+
+interface UseDeparturesReturn {
+  departures: DeparturesMap
+  loading: boolean
+  errors: ErrorsMap
+  lastUpdated: Date | null
+  countdown: number
+  refresh: () => void
+}
+
+export function useDepartures(
+  stations: Station[],
+  { autoRefresh = false, refreshInterval = 30 }: UseDeparturesOptions = {}
+): UseDeparturesReturn {
+  const [departures, setDepartures] = useState<DeparturesMap>({})
   const [loading, setLoading] = useState(true)
-  const [errors, setErrors] = useState({})
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const [errors, setErrors] = useState<ErrorsMap>({})
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [countdown, setCountdown] = useState(refreshInterval)
 
-  const intervalRef = useRef(null)
-  const tickRef = useRef(null)
-  const rawArrivalsRef = useRef({})
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const rawArrivalsRef = useRef<Record<string, Arrival[]>>({})
   const stationsRef = useRef(stations)
 
   // Keep stations ref updated for use in tick interval
@@ -20,11 +38,11 @@ export function useDepartures(stations, { autoRefresh = false, refreshInterval =
 
   // Re-filter raw arrivals to update timeToStation and remove departed trains
   const updateDepartures = useCallback(() => {
-    const stations = stationsRef.current
-    if (!stations || stations.length === 0) return
+    const currentStations = stationsRef.current
+    if (!currentStations || currentStations.length === 0) return
 
-    const newDepartures = {}
-    for (const station of stations) {
+    const newDepartures: DeparturesMap = {}
+    for (const station of currentStations) {
       const raw = rawArrivalsRef.current[station.id]
       if (raw) {
         newDepartures[station.id] = filterArrivals(raw, {
@@ -47,8 +65,8 @@ export function useDepartures(stations, { autoRefresh = false, refreshInterval =
       return
     }
 
-    const newRawArrivals = {}
-    const newErrors = {}
+    const newRawArrivals: Record<string, Arrival[]> = {}
+    const newErrors: ErrorsMap = {}
 
     await Promise.all(
       stations.map(async (station) => {
@@ -58,7 +76,7 @@ export function useDepartures(stations, { autoRefresh = false, refreshInterval =
           newErrors[station.id] = null
         } catch (error) {
           console.error(`Error fetching departures for ${station.name}:`, error)
-          newErrors[station.id] = error.message
+          newErrors[station.id] = error instanceof Error ? error.message : 'Unknown error'
           // Keep old raw data if available
           if (rawArrivalsRef.current[station.id]) {
             newRawArrivals[station.id] = rawArrivalsRef.current[station.id]

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { isStationVisible, filterVisibleStations, getDefaultSchedule } from '../utils/schedule'
+import type { Schedule, Station } from '../types'
 
 describe('isStationVisible', () => {
   describe('when schedule is disabled or null', () => {
@@ -12,7 +13,7 @@ describe('isStationVisible', () => {
     })
 
     it('returns true when schedule.enabled is false', () => {
-      const schedule = {
+      const schedule: Schedule = {
         enabled: false,
         startTime: '09:00',
         endTime: '17:00',
@@ -26,7 +27,7 @@ describe('isStationVisible', () => {
     it('returns false when current day is not in schedule', () => {
       // Monday = 1
       const monday = new Date(2024, 0, 15, 10, 0, 0) // Monday
-      const schedule = {
+      const schedule: Schedule = {
         enabled: true,
         startTime: '09:00',
         endTime: '17:00',
@@ -37,7 +38,7 @@ describe('isStationVisible', () => {
 
     it('returns true when current day is in schedule', () => {
       const monday = new Date(2024, 0, 15, 10, 0, 0) // Monday
-      const schedule = {
+      const schedule: Schedule = {
         enabled: true,
         startTime: '09:00',
         endTime: '17:00',
@@ -48,7 +49,7 @@ describe('isStationVisible', () => {
 
     it('handles Sunday (day 0)', () => {
       const sunday = new Date(2024, 0, 14, 10, 0, 0) // Sunday
-      const schedule = {
+      const schedule: Schedule = {
         enabled: true,
         startTime: '09:00',
         endTime: '17:00',
@@ -59,7 +60,7 @@ describe('isStationVisible', () => {
 
     it('handles Saturday (day 6)', () => {
       const saturday = new Date(2024, 0, 13, 10, 0, 0) // Saturday
-      const schedule = {
+      const schedule: Schedule = {
         enabled: true,
         startTime: '09:00',
         endTime: '17:00',
@@ -70,7 +71,7 @@ describe('isStationVisible', () => {
   })
 
   describe('time range filtering (normal schedule)', () => {
-    const schedule = {
+    const schedule: Schedule = {
       enabled: true,
       startTime: '09:00',
       endTime: '17:00',
@@ -104,7 +105,7 @@ describe('isStationVisible', () => {
   })
 
   describe('overnight schedule (end < start)', () => {
-    const overnightSchedule = {
+    const overnightSchedule: Schedule = {
       enabled: true,
       startTime: '22:00',
       endTime: '06:00',
@@ -144,7 +145,7 @@ describe('isStationVisible', () => {
 
   describe('edge cases', () => {
     it('handles schedule spanning midnight exactly', () => {
-      const schedule = {
+      const schedule: Schedule = {
         enabled: true,
         startTime: '23:00',
         endTime: '01:00',
@@ -155,7 +156,7 @@ describe('isStationVisible', () => {
     })
 
     it('handles schedule starting at midnight', () => {
-      const schedule = {
+      const schedule: Schedule = {
         enabled: true,
         startTime: '00:00',
         endTime: '06:00',
@@ -166,7 +167,7 @@ describe('isStationVisible', () => {
     })
 
     it('handles schedule ending at midnight', () => {
-      const schedule = {
+      const schedule: Schedule = {
         enabled: true,
         startTime: '18:00',
         endTime: '00:00',
@@ -181,7 +182,7 @@ describe('isStationVisible', () => {
 })
 
 describe('filterVisibleStations', () => {
-  const schedule = {
+  const schedule: Schedule = {
     enabled: true,
     startTime: '09:00',
     endTime: '17:00',
@@ -194,9 +195,9 @@ describe('filterVisibleStations', () => {
 
   it('filters stations based on schedule', () => {
     const monday10am = new Date(2024, 0, 15, 10, 0, 0) // Monday
-    const stations = [
-      { id: 'visible', name: 'Visible', schedule },
-      { id: 'no-schedule', name: 'No Schedule' },
+    const stations: Station[] = [
+      { id: 'visible', name: 'Visible', type: 'tfl', schedule, minMinutes: 0, maxMinutes: 60, destinations: [] },
+      { id: 'no-schedule', name: 'No Schedule', type: 'tfl', minMinutes: 0, maxMinutes: 60, destinations: [] },
     ]
     const result = filterVisibleStations(stations, monday10am)
     expect(result).toHaveLength(2)
@@ -204,7 +205,9 @@ describe('filterVisibleStations', () => {
 
   it('excludes stations outside schedule', () => {
     const sunday = new Date(2024, 0, 14, 10, 0, 0) // Sunday
-    const stations = [{ id: 'hidden', name: 'Hidden', schedule }]
+    const stations: Station[] = [
+      { id: 'hidden', name: 'Hidden', type: 'tfl', schedule, minMinutes: 0, maxMinutes: 60, destinations: [] },
+    ]
     const result = filterVisibleStations(stations, sunday)
     expect(result).toHaveLength(0)
   })

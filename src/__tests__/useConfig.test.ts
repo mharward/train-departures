@@ -21,9 +21,9 @@ describe('migrateStation', () => {
     }
     const result = migrateStation(station)
     expect(result.destinations).toHaveLength(1)
-    expect(result.destinations[0].name).toBe('Victoria')
-    expect(result.destinations[0].crs).toBeNull()
-    expect(result.destinations[0].id).toBe('text-Victoria')
+    expect(result.destinations[0]?.name).toBe('Victoria')
+    expect(result.destinations[0]?.crs).toBeNull()
+    expect(result.destinations[0]?.id).toBe('text-Victoria')
   })
 
   it('trims whitespace from destinationFilter', () => {
@@ -33,7 +33,7 @@ describe('migrateStation', () => {
       destinationFilter: '  Victoria  ',
     }
     const result = migrateStation(station)
-    expect(result.destinations[0].name).toBe('Victoria')
+    expect(result.destinations[0]?.name).toBe('Victoria')
   })
 
   it('sets empty destinations array for empty destinationFilter', () => {
@@ -69,21 +69,21 @@ describe('migrateStation', () => {
     const station = {
       id: 'test-1',
       name: 'Test Station',
-      type: 'national-rail',
+      type: 'national-rail' as const,
       crs: 'VIC',
       minMinutes: 5,
       maxMinutes: 30,
-      schedule: { enabled: true },
+      schedule: { enabled: true, startTime: '09:00', endTime: '17:00', days: [1, 2, 3, 4, 5] },
       destinationFilter: 'Brighton',
     }
     const result = migrateStation(station)
     expect(result.id).toBe('test-1')
     expect(result.name).toBe('Test Station')
     expect(result.type).toBe('national-rail')
-    expect(result.crs).toBe('VIC')
+    expect((result as { crs: string }).crs).toBe('VIC')
     expect(result.minMinutes).toBe(5)
     expect(result.maxMinutes).toBe(30)
-    expect(result.schedule).toEqual({ enabled: true })
+    expect(result.schedule).toEqual({ enabled: true, startTime: '09:00', endTime: '17:00', days: [1, 2, 3, 4, 5] })
   })
 
   it('does not mutate the original station object', () => {
@@ -93,7 +93,7 @@ describe('migrateStation', () => {
       destinationFilter: 'Victoria',
     }
     const result = migrateStation(station)
-    expect(station.destinations).toBeUndefined()
+    expect((station as { destinations?: unknown }).destinations).toBeUndefined()
     expect(result).not.toBe(station)
   })
 
@@ -101,7 +101,7 @@ describe('migrateStation', () => {
     const station = {
       id: 'test-1',
       name: 'Test Station',
-      destinationFilter: null,
+      destinationFilter: null as unknown as string,
     }
     const result = migrateStation(station)
     expect(result.destinations).toEqual([])

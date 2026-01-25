@@ -24,7 +24,6 @@ describe('getLineColor', () => {
 
   it('returns default color when neither line nor mode found', () => {
     expect(getLineColor('unknown', 'unknown')).toBe('#666666')
-    expect(getLineColor(null, null)).toBe('#666666')
     expect(getLineColor(undefined, undefined)).toBe('#666666')
   })
 

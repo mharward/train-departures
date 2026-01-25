@@ -1,6 +1,12 @@
 import { getLineColor, getContrastColor } from '../utils/modeColors'
 
-export function LineIndicator({ lineId, lineName, modeName }) {
+interface LineIndicatorProps {
+  lineId: string
+  lineName: string
+  modeName: string
+}
+
+export function LineIndicator({ lineId, lineName, modeName }: LineIndicatorProps) {
   const bgColor = getLineColor(lineId, modeName)
   const textColor = getContrastColor(bgColor)
 

@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, FormEvent } from 'react'
 import { searchStations } from '../utils/api'
 import { getDefaultSchedule } from '../utils/schedule'
 import { TransportIcon } from './TransportIcon'
+import type { AppConfig, Station, Destination, StationSearchResult, Schedule } from '../types'
 
 // Format modes for display - only show modes we can provide data for
-function formatModes(station) {
+function formatModes(station: StationSearchResult | Station): string {
   if (station.type === 'national-rail') {
     return 'National Rail'
   }
@@ -14,7 +15,7 @@ function formatModes(station) {
   const displayModes = (station.modes || [])
     .filter((mode) => tflModes.includes(mode))
     .map((mode) => {
-      const names = {
+      const names: Record<string, string> = {
         tube: 'Tube',
         dlr: 'DLR',
         overground: 'Overground',
@@ -27,7 +28,7 @@ function formatModes(station) {
 }
 
 // Format days for display
-function formatDays(days) {
+function formatDays(days: number[]): string {
   if (!days || days.length === 0) return ''
   if (days.length === 7) return 'every day'
 
@@ -49,8 +50,8 @@ function formatDays(days) {
 }
 
 // Generate filter summary for display
-function getFilterSummary(station) {
-  const parts = []
+function getFilterSummary(station: Station): string | null {
+  const parts: string[] = []
 
   // Show destinations from new array format
   if (station.destinations && station.destinations.length > 0) {
@@ -81,6 +82,15 @@ function getFilterSummary(station) {
   return parts.length > 0 ? parts.join(', ') : null
 }
 
+interface SettingsProps {
+  config: AppConfig
+  onAddStation: (station: StationSearchResult) => void
+  onUpdateStation: (stationId: string, updates: Partial<Station>) => void
+  onRemoveStation: (stationId: string) => void
+  onUpdateSettings: (updates: Partial<AppConfig>) => void
+  onClose: () => void
+}
+
 export function Settings({
   config,
   onAddStation,
@@ -88,11 +98,11 @@ export function Settings({
   onRemoveStation,
   onUpdateSettings,
   onClose,
-}) {
+}: SettingsProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState([])
+  const [searchResults, setSearchResults] = useState<StationSearchResult[]>([])
   const [searching, setSearching] = useState(false)
-  const [editingStation, setEditingStation] = useState(null)
+  const [editingStation, setEditingStation] = useState<string | null>(null)
 
   // Debounced search
   useEffect(() => {
@@ -117,17 +127,8 @@ export function Settings({
   }, [searchQuery])
 
   const handleAddStation = useCallback(
-    (station) => {
-      onAddStation({
-        id: station.id,
-        name: station.name,
-        type: station.type || 'tfl',
-        crs: station.crs || null,
-        minMinutes: 0,
-        maxMinutes: 60,
-        destinationFilter: '',
-        destinations: [],
-      })
+    (station: StationSearchResult) => {
+      onAddStation(station)
       setSearchQuery('')
       setSearchResults([])
     },
@@ -135,14 +136,14 @@ export function Settings({
   )
 
   const handleSaveEdit = useCallback(
-    (stationId, updates) => {
+    (stationId: string, updates: Partial<Station>) => {
       onUpdateStation(stationId, updates)
       setEditingStation(null)
     },
     [onUpdateStation]
   )
 
-  const isStationAdded = (stationId) => {
+  const isStationAdded = (stationId: string): boolean => {
     return config.stations.some((s) => s.id === stationId)
   }
 
@@ -220,7 +221,7 @@ export function Settings({
                           {getFilterSummary(station) && (
                             <span
                               className="station-filter-summary"
-                              title={getFilterSummary(station)}
+                              title={getFilterSummary(station) || undefined}
                             >
                               {getFilterSummary(station)}
                             </span>
@@ -299,7 +300,7 @@ export function Settings({
               <select
                 id="theme"
                 value={config.theme}
-                onChange={(e) => onUpdateSettings({ theme: e.target.value })}
+                onChange={(e) => onUpdateSettings({ theme: e.target.value as AppConfig['theme'] })}
               >
                 <option value="system">System</option>
                 <option value="dark">Dark</option>
@@ -313,17 +314,23 @@ export function Settings({
   )
 }
 
-function StationEditForm({ station, onSave, onCancel }) {
+interface StationEditFormProps {
+  station: Station
+  onSave: (updates: Partial<Station>) => void
+  onCancel: () => void
+}
+
+function StationEditForm({ station, onSave, onCancel }: StationEditFormProps) {
   const [minMinutes, setMinMinutes] = useState(station.minMinutes || 0)
   const [scheduleEnabled, setScheduleEnabled] = useState(station.schedule?.enabled || false)
   const [startTime, setStartTime] = useState(station.schedule?.startTime || '04:00')
   const [endTime, setEndTime] = useState(station.schedule?.endTime || '12:00')
-  const [days, setDays] = useState(station.schedule?.days || [1, 2, 3, 4, 5])
+  const [days, setDays] = useState<number[]>(station.schedule?.days || [1, 2, 3, 4, 5])
 
   // Destination picker state
-  const [destinations, setDestinations] = useState(station.destinations || [])
+  const [destinations, setDestinations] = useState<Destination[]>(station.destinations || [])
   const [destQuery, setDestQuery] = useState('')
-  const [destResults, setDestResults] = useState([])
+  const [destResults, setDestResults] = useState<StationSearchResult[]>([])
   const [destSearching, setDestSearching] = useState(false)
 
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -350,7 +357,7 @@ function StationEditForm({ station, onSave, onCancel }) {
     return () => clearTimeout(timer)
   }, [destQuery])
 
-  const toggleDay = (dayIndex) => {
+  const toggleDay = (dayIndex: number) => {
     if (days.includes(dayIndex)) {
       setDays(days.filter((d) => d !== dayIndex))
     } else {
@@ -358,7 +365,7 @@ function StationEditForm({ station, onSave, onCancel }) {
     }
   }
 
-  const handleEnableSchedule = (enabled) => {
+  const handleEnableSchedule = (enabled: boolean) => {
     setScheduleEnabled(enabled)
     if (enabled && !station.schedule) {
       // Apply defaults when first enabling
@@ -369,7 +376,7 @@ function StationEditForm({ station, onSave, onCancel }) {
     }
   }
 
-  const addDestination = (result) => {
+  const addDestination = (result: StationSearchResult) => {
     // Check if already added
     if (destinations.some((d) => d.id === result.id)) {
       return
@@ -386,14 +393,14 @@ function StationEditForm({ station, onSave, onCancel }) {
     setDestResults([])
   }
 
-  const removeDestination = (destId) => {
+  const removeDestination = (destId: string) => {
     setDestinations(destinations.filter((d) => d.id !== destId))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    const updates = {
-      minMinutes: parseInt(minMinutes, 10) || 0,
+    const updates: Partial<Station> = {
+      minMinutes: minMinutes || 0,
       destinations,
       destinationFilter: '', // Clear legacy field when saving
     }
@@ -404,7 +411,7 @@ function StationEditForm({ station, onSave, onCancel }) {
         startTime,
         endTime,
         days,
-      }
+      } satisfies Schedule
     } else {
       updates.schedule = null
     }
@@ -496,7 +503,7 @@ function StationEditForm({ station, onSave, onCancel }) {
           min="0"
           max="60"
           value={minMinutes}
-          onChange={(e) => setMinMinutes(e.target.value)}
+          onChange={(e) => setMinMinutes(parseInt(e.target.value, 10) || 0)}
         />
         <span className="field-hint">Hide departures sooner than this</span>
       </div>
