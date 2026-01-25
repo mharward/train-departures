@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { searchStations } from '../utils/api'
+import { getDefaultSchedule } from '../utils/schedule'
 
 // Format modes for display - only show modes we can provide data for
 function formatModes(station) {
@@ -24,6 +25,24 @@ function formatModes(station) {
   return displayModes.join(', ') || 'TfL'
 }
 
+// Format days for display
+function formatDays(days) {
+  if (!days || days.length === 0) return ''
+  if (days.length === 7) return 'every day'
+
+  const weekdays = [1, 2, 3, 4, 5]
+  const weekend = [0, 6]
+
+  const isWeekdays = weekdays.every(d => days.includes(d)) && !days.includes(0) && !days.includes(6)
+  const isWeekend = weekend.every(d => days.includes(d)) && days.length === 2
+
+  if (isWeekdays) return 'Mon-Fri'
+  if (isWeekend) return 'Sat-Sun'
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  return days.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')
+}
+
 // Generate filter summary for display
 function getFilterSummary(station) {
   const parts = []
@@ -35,6 +54,13 @@ function getFilterSummary(station) {
   const min = station.minMinutes || 0
   if (min > 0) {
     parts.push(`>${min} min`)
+  }
+
+  // Add schedule info
+  if (station.schedule && station.schedule.enabled) {
+    const { startTime, endTime, days } = station.schedule
+    const daysStr = formatDays(days)
+    parts.push(`${startTime}-${endTime} ${daysStr}`)
   }
 
   return parts.length > 0 ? parts.join(', ') : null
@@ -273,13 +299,59 @@ function StationEditForm({ station, onSave, onCancel }) {
   const [destinationFilter, setDestinationFilter] = useState(
     station.destinationFilter || ''
   )
+  const [scheduleEnabled, setScheduleEnabled] = useState(
+    station.schedule?.enabled || false
+  )
+  const [startTime, setStartTime] = useState(
+    station.schedule?.startTime || '04:00'
+  )
+  const [endTime, setEndTime] = useState(
+    station.schedule?.endTime || '12:00'
+  )
+  const [days, setDays] = useState(
+    station.schedule?.days || [1, 2, 3, 4, 5]
+  )
+
+  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+  const toggleDay = (dayIndex) => {
+    if (days.includes(dayIndex)) {
+      setDays(days.filter(d => d !== dayIndex))
+    } else {
+      setDays([...days, dayIndex].sort((a, b) => a - b))
+    }
+  }
+
+  const handleEnableSchedule = (enabled) => {
+    setScheduleEnabled(enabled)
+    if (enabled && !station.schedule) {
+      // Apply defaults when first enabling
+      const defaults = getDefaultSchedule()
+      setStartTime(defaults.startTime)
+      setEndTime(defaults.endTime)
+      setDays(defaults.days)
+    }
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSave({
+    const updates = {
       minMinutes: parseInt(minMinutes, 10) || 0,
       destinationFilter: destinationFilter.trim(),
-    })
+    }
+
+    if (scheduleEnabled) {
+      updates.schedule = {
+        enabled: true,
+        startTime,
+        endTime,
+        days,
+      }
+    } else {
+      updates.schedule = null
+    }
+
+    onSave(updates)
   }
 
   return (
@@ -313,6 +385,62 @@ function StationEditForm({ station, onSave, onCancel }) {
           onChange={(e) => setMinMinutes(e.target.value)}
         />
         <span className="field-hint">Hide departures sooner than this</span>
+      </div>
+
+      {/* Schedule Section */}
+      <div className="schedule-section">
+        <label className="schedule-enable">
+          <input
+            type="checkbox"
+            checked={scheduleEnabled}
+            onChange={(e) => handleEnableSchedule(e.target.checked)}
+          />
+          Only show during scheduled times
+        </label>
+
+        {scheduleEnabled && (
+          <div className="schedule-options">
+            <div className="schedule-times">
+              <div className="time-field">
+                <label htmlFor={`start-${station.id}`}>From</label>
+                <input
+                  type="time"
+                  id={`start-${station.id}`}
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                />
+              </div>
+              <div className="time-field">
+                <label htmlFor={`end-${station.id}`}>To</label>
+                <input
+                  type="time"
+                  id={`end-${station.id}`}
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="day-picker">
+              {dayLabels.map((label, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={`day-button ${days.includes(index) ? 'active' : ''}`}
+                  onClick={() => toggleDay(index)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {days.length === 0 && (
+              <span className="schedule-warning">
+                No days selected - station will never be visible
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="edit-actions">

@@ -258,6 +258,11 @@ export function filterArrivals(arrivals, { minMinutes = 0, maxMinutes = 60, dest
       timeToStation: Math.floor((arrival.expectedDeparture - now) / 1000),
     }))
     .filter((arrival) => {
+      // Filter out departed trains (negative timeToStation)
+      if (arrival.timeToStation < 0) {
+        return false
+      }
+
       // Must be at least minMinutes away
       if (arrival.timeToStation < minSeconds) {
         return false

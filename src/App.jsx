@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Dashboard } from './components/Dashboard'
 import { Settings } from './components/Settings'
 import { useConfig } from './hooks/useConfig'
 import { useDepartures } from './hooks/useDepartures'
+import { filterVisibleStations } from './utils/schedule'
 import './App.css'
 
 function App() {
   const [showSettings, setShowSettings] = useState(false)
+  const [currentTime, setCurrentTime] = useState(() => new Date())
   const {
     config,
     addStation,
@@ -15,6 +17,20 @@ function App() {
     updateSettings,
   } = useConfig()
 
+  // Update current time every minute for schedule filtering
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Filter stations based on schedule visibility
+  const visibleStations = useMemo(
+    () => filterVisibleStations(config.stations, currentTime),
+    [config.stations, currentTime]
+  )
+
   const {
     departures,
     loading,
@@ -22,7 +38,7 @@ function App() {
     lastUpdated,
     countdown,
     refresh,
-  } = useDepartures(config.stations, {
+  } = useDepartures(visibleStations, {
     autoRefresh: config.autoRefresh,
     refreshInterval: config.refreshInterval,
   })
@@ -52,7 +68,7 @@ function App() {
   return (
     <div className="app">
       <Dashboard
-        stations={config.stations}
+        stations={visibleStations}
         departures={departures}
         errors={errors}
         loading={loading}
