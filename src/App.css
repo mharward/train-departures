@@ -482,11 +482,15 @@
 .station-info {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .station-info .station-name {
   display: block;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .station-filter-summary {
@@ -498,6 +502,7 @@
 
 .station-actions {
   display: flex;
+  flex-shrink: 0;
   gap: 0.5rem;
 }
 
