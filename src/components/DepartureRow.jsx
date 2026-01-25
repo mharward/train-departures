@@ -18,7 +18,7 @@ export function DepartureRow({ departure, showPlatform }) {
 
       <div className="departure-info">
         <div className="departure-destination">
-          <span className="destination-name">
+          <span className="destination-name" title={departure.destinationName || departure.towards || 'Unknown'}>
             {departure.destinationName || departure.towards || 'Unknown'}
           </span>
           {departure.status === 'Delayed' && (

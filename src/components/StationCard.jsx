@@ -35,9 +35,9 @@ export function StationCard({ station, departures, error, showPlatform }) {
     <div className="station-card">
       <div className="station-header">
         <TransportIcon type={station.type} size={24} />
-        <h2 className="station-name">{station.name}</h2>
+        <h2 className="station-name" title={station.name}>{station.name}</h2>
         {filterSummary && (
-          <span className="filter-summary">{filterSummary}</span>
+          <span className="filter-summary" title={filterSummary}>{filterSummary}</span>
         )}
       </div>
 

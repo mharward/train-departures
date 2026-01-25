@@ -173,7 +173,7 @@ export function Settings({
                   <li key={station.id} className="search-result-item">
                     <TransportIcon type={station.type} size={24} />
                     <div className="station-result-info">
-                      <span className="station-result-name">{station.name}</span>
+                      <span className="station-result-name" title={station.name}>{station.name}</span>
                       <span className="station-result-modes">
                         {formatModes(station)}
                       </span>
@@ -210,9 +210,9 @@ export function Settings({
                       <div className="station-display">
                         <TransportIcon type={station.type} size={24} />
                         <div className="station-info">
-                          <span className="station-name">{station.name}</span>
+                          <span className="station-name" title={station.name}>{station.name}</span>
                           {getFilterSummary(station) && (
-                            <span className="station-filter-summary">
+                            <span className="station-filter-summary" title={getFilterSummary(station)}>
                               {getFilterSummary(station)}
                             </span>
                           )}
@@ -456,7 +456,7 @@ function StationEditForm({ station, onSave, onCancel }) {
               <li key={result.id} className="destination-result-item">
                 <TransportIcon type={result.type} size={18} />
                 <div className="destination-result-info">
-                  <span className="destination-result-name">{result.name}</span>
+                  <span className="destination-result-name" title={result.name}>{result.name}</span>
                   {result.crs && (
                     <span className="destination-result-crs">{result.crs}</span>
                   )}
