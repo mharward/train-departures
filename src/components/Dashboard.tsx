@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AppShell, Group, Title, Text, Button, SimpleGrid, Stack, Center } from '@mantine/core'
+import { AppShell, Group, Title, Text, Button, ActionIcon, SimpleGrid, Stack, Center } from '@mantine/core'
 import { StationCard } from './StationCard'
 import type { Station, DeparturesMap, ErrorsMap } from '../types'
 
@@ -71,15 +71,20 @@ export function Dashboard({
       }}
     >
       <AppShell.Header p="sm">
-        <Group justify="space-between" h="100%">
+        <Group justify="space-between" h="100%" wrap="nowrap">
           <Title order={3}>Train Departures</Title>
 
-          <Group gap="md">
-            <Group gap="xs">
+          <Group gap="sm" wrap="nowrap">
+            <Group gap="xs" wrap="nowrap" style={{ overflow: 'hidden' }}>
               <Text size="lg" fw={600} style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {formatTime(lastUpdated)}
               </Text>
-              <Text size="xs" c="dimmed" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              <Text
+                size="xs"
+                c="dimmed"
+                visibleFrom="xs"
+                style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
+              >
                 {loading ? 'Updating...' : (
                   <>
                     {formatElapsed(elapsed)}
@@ -87,17 +92,45 @@ export function Dashboard({
                   </>
                 )}
               </Text>
-              <Button
-                variant="default"
-                size="xs"
-                onClick={onRefresh}
-                disabled={loading}
-              >
-                Refresh
-              </Button>
             </Group>
 
-            <Button variant="default" size="sm" onClick={onOpenSettings}>
+            {/* Mobile: icon buttons */}
+            <ActionIcon
+              variant="default"
+              size="lg"
+              onClick={onRefresh}
+              disabled={loading}
+              hiddenFrom="xs"
+              aria-label="Refresh"
+            >
+              ↻
+            </ActionIcon>
+            <ActionIcon
+              variant="default"
+              size="lg"
+              onClick={onOpenSettings}
+              hiddenFrom="xs"
+              aria-label="Settings"
+            >
+              ⚙
+            </ActionIcon>
+
+            {/* Desktop: text buttons */}
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onRefresh}
+              disabled={loading}
+              visibleFrom="xs"
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onOpenSettings}
+              visibleFrom="xs"
+            >
               Settings
             </Button>
           </Group>
