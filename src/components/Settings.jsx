@@ -414,6 +414,11 @@ function StationEditForm({ station, onSave, onCancel }) {
 
   return (
     <form className="station-edit-form" onSubmit={handleSubmit}>
+      <div className="edit-form-header">
+        <TransportIcon type={station.type} size={20} />
+        <span className="edit-form-station-name" title={station.name}>{station.name}</span>
+      </div>
+
       <div className="edit-field destination-picker">
         <label>Filter by destination (optional)</label>
 
