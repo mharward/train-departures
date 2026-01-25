@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Perspective tracks coming from train -->
+  <polygon points="8,26 2,32 5,32 10,26" fill="#64748b"/>
+  <polygon points="20,26 26,32 23,32 18,26" fill="#64748b"/>
+  <!-- Sleepers aligned to train -->
+  <line x1="7" y1="28" x2="21" y2="28" stroke="#78716c" stroke-width="1.5"/>
+  <line x1="4" y1="31" x2="24" y2="31" stroke="#78716c" stroke-width="1.5"/>
+
+  <!-- Blue train front view -->
+  <rect x="4" y="4" width="20" height="22" rx="4" fill="#2563eb"/>
+
+  <!-- Train roof -->
+  <rect x="6" y="2" width="16" height="4" rx="2" fill="#1d4ed8"/>
+
+  <!-- Main window -->
+  <rect x="7" y="8" width="14" height="7" rx="1.5" fill="#fff"/>
+
+  <!-- Destination board -->
+  <rect x="9" y="17" width="10" height="3" rx="1" fill="#1d4ed8"/>
+
+  <!-- Headlights -->
+  <circle cx="9" cy="23" r="2" fill="#fff"/>
+  <circle cx="19" cy="23" r="2" fill="#fff"/>
+
+  <!-- Red clock overlay (top right) -->
+  <circle cx="24" cy="8" r="7" fill="#dc2626"/>
+  <circle cx="24" cy="8" r="5" fill="#fff"/>
+  <line x1="24" y1="8" x2="24" y2="4.5" stroke="#dc2626" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="24" y1="8" x2="27" y2="8" stroke="#dc2626" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="24" cy="8" r="0.8" fill="#dc2626"/>
+</svg>

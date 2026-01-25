@@ -1,4 +1,6 @@
-# Train Departures Dashboard
+# Next Train
+
+**Live at [nexttrain.uk](https://nexttrain.uk)**
 
 A React + Vite app showing real-time train departures from nearby stations. Designed for wall-mounted kitchen dashboards.
 
@@ -74,9 +76,9 @@ npx netlify deploy --prod --dir=dist
 
 ## Tech Stack
 
-- React 18
+- React 18 + TypeScript
 - Vite
-- Plain CSS
+- Mantine UI
 - TfL Unified API (Tube, DLR, Overground, Elizabeth Line)
 - Huxley 2 / Darwin API (National Rail)
 
@@ -93,27 +95,3 @@ The [TfL Unified API](https://api.tfl.gov.uk/) provides real-time arrival data f
 National Rail data is provided via [Huxley 2](https://github.com/jpsingleton/Huxley2), a JSON proxy for the Darwin SOAP API:
 - Uses the public demo instance (no registration required)
 - Covers all UK train operators
-
-## Project Structure
-
-```
-src/
-├── main.jsx               # Entry point
-├── App.jsx                # Main app container
-├── App.css                # Component styles
-├── index.css              # Base styles
-├── components/
-│   ├── Dashboard.jsx      # Main departure board display
-│   ├── StationCard.jsx    # Single station's departures
-│   ├── DepartureRow.jsx   # Individual departure row
-│   ├── Settings.jsx       # Configuration modal
-│   ├── LineIndicator.jsx  # Line color badge
-│   └── TransportIcon.jsx  # TfL/National Rail SVG icons
-├── hooks/
-│   ├── useConfig.js       # localStorage config management
-│   └── useDepartures.js   # API fetching + polling
-└── utils/
-    ├── api.js             # TfL + National Rail API wrapper
-    ├── modeColors.js      # Line/operator color mapping
-    └── schedule.js        # Time/day schedule utilities
-```

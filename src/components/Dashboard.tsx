@@ -72,7 +72,10 @@ export function Dashboard({
     >
       <AppShell.Header p="sm">
         <Group justify="space-between" h="100%" wrap="nowrap">
-          <Title order={3}>Train Departures</Title>
+          <Group gap="xs" wrap="nowrap">
+            <img src="/logo.svg" alt="" width={28} height={28} />
+            <Title order={3}>Next Train</Title>
+          </Group>
 
           <Group gap="sm" wrap="nowrap">
             <Group gap="xs" wrap="nowrap" style={{ overflow: 'hidden' }}>
@@ -82,7 +85,6 @@ export function Dashboard({
               <Text
                 size="xs"
                 c="dimmed"
-                visibleFrom="xs"
                 style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
               >
                 {loading ? 'Updating...' : (
