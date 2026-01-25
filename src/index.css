@@ -19,6 +19,7 @@
   --accent-color: #3b82f6;
   --error-color: #ef4444;
   --success-color: #22c55e;
+  --warning-color: #f59e0b;
 }
 
 [data-theme="light"] {
@@ -32,6 +33,7 @@
   --accent-color: #2563eb;
   --error-color: #dc2626;
   --success-color: #16a34a;
+  --warning-color: #d97706;
 }
 
 html {

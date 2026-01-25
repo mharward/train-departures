@@ -18,7 +18,12 @@ export function DepartureRow({ departure, showPlatform }) {
 
       <div className="departure-info">
         <div className="departure-destination">
-          {departure.destinationName || departure.towards || 'Unknown'}
+          <span className="destination-name">
+            {departure.destinationName || departure.towards || 'Unknown'}
+          </span>
+          {departure.status === 'Delayed' && (
+            <span className="status-badge delayed">Delayed</span>
+          )}
         </div>
         <div className="departure-line">
           <LineIndicator
