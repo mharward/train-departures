@@ -1,3 +1,4 @@
+import { Group, Stack, Text, Badge, Box } from '@mantine/core'
 import { LineIndicator } from './LineIndicator'
 import { formatMinutes } from '../utils/api'
 import type { FilteredArrival } from '../types'
@@ -16,37 +17,66 @@ export function DepartureRow({ departure, showPlatform }: DepartureRowProps) {
   const isDue = minutes === 'Due'
 
   return (
-    <div className={`departure-row ${isDue ? 'due' : ''}`}>
-      <div className="departure-time">
-        <span className="minutes">{minutes}</span>
-        <span className="departure-time-absolute">{formatTime(departure.expectedDeparture)}</span>
-      </div>
+    <Group
+      gap="md"
+      p="sm"
+      px="md"
+      wrap="nowrap"
+      style={{
+        borderBottom: '1px solid var(--mantine-color-default-border)',
+        backgroundColor: isDue ? 'rgba(34, 197, 94, 0.1)' : undefined,
+      }}
+    >
+      {/* Time */}
+      <Stack gap={0} align="flex-end" style={{ minWidth: 70 }}>
+        <Text
+          fw={700}
+          size="lg"
+          c={isDue ? 'green.5' : undefined}
+          style={{ fontVariantNumeric: 'tabular-nums' }}
+        >
+          {minutes}
+        </Text>
+        <Text size="xs" c="dimmed" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {formatTime(departure.expectedDeparture)}
+        </Text>
+      </Stack>
 
-      <div className="departure-info">
-        <div className="departure-destination">
-          <span
-            className="destination-name"
+      {/* Destination and Line */}
+      <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+        <Group gap="xs" wrap="nowrap">
+          <Text
+            fw={500}
+            size="lg"
+            truncate
             title={departure.destinationName || 'Unknown'}
           >
             {departure.destinationName || 'Unknown'}
-          </span>
-          {departure.status === 'Delayed' && <span className="status-badge delayed">Delayed</span>}
-        </div>
-        <div className="departure-line">
-          <LineIndicator
-            lineId={departure.lineId}
-            lineName={departure.lineName}
-            modeName={departure.modeName}
-          />
-        </div>
-      </div>
+          </Text>
+          {departure.status === 'Delayed' && (
+            <Badge size="xs" color="yellow" variant="outline">
+              Delayed
+            </Badge>
+          )}
+        </Group>
+        <LineIndicator
+          lineId={departure.lineId}
+          lineName={departure.lineName}
+          modeName={departure.modeName}
+        />
+      </Stack>
 
+      {/* Platform */}
       {showPlatform && departure.platformName && (
-        <div className="departure-platform">
-          <span className="platform-label">Platform</span>
-          <span className="platform-number">{departure.platformName}</span>
-        </div>
+        <Box ta="right" style={{ minWidth: 60 }}>
+          <Text size="xs" tt="uppercase" c="dimmed" style={{ letterSpacing: '0.05em' }}>
+            Platform
+          </Text>
+          <Text size="sm" fw={500}>
+            {departure.platformName}
+          </Text>
+        </Box>
       )}
-    </div>
+    </Group>
   )
 }

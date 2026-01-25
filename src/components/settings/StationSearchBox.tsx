@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { Stack, TextInput, Group, Text, Button, Title, Loader } from '@mantine/core'
 import { searchStations } from '../../utils/api'
 import { formatModes } from '../../utils/stationDisplay'
 import { TransportIcon } from '../TransportIcon'
@@ -50,41 +51,53 @@ export function StationSearchBox({ onAddStation, isStationAdded }: StationSearch
   )
 
   return (
-    <section className="settings-section">
-      <h3>Add Station</h3>
-      <div className="search-box">
-        <input
-          type="text"
-          placeholder="Search for a station..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="search-input"
-        />
-        {searching && <span className="search-loading">Searching...</span>}
-      </div>
+    <Stack gap="sm">
+      <Title order={5}>Add Station</Title>
+      <TextInput
+        placeholder="Search for a station..."
+        value={query}
+        onChange={(e) => setQuery(e.currentTarget.value)}
+        rightSection={searching ? <Loader size="xs" /> : null}
+      />
 
       {results.length > 0 && (
-        <ul className="search-results">
+        <Stack
+          gap={0}
+          style={{
+            border: '1px solid var(--mantine-color-default-border)',
+            borderRadius: 'var(--mantine-radius-sm)',
+            maxHeight: 300,
+            overflowY: 'auto',
+          }}
+        >
           {results.map((station) => (
-            <li key={station.id} className="search-result-item">
+            <Group
+              key={station.id}
+              gap="sm"
+              p="sm"
+              wrap="nowrap"
+              style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}
+            >
               <TransportIcon type={station.type} size={24} />
-              <div className="station-result-info">
-                <span className="station-result-name" title={station.name}>
+              <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                <Text fw={500} truncate title={station.name}>
                   {station.name}
-                </span>
-                <span className="station-result-modes">{formatModes(station)}</span>
-              </div>
-              <button
-                className="add-station-button"
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {formatModes(station)}
+                </Text>
+              </Stack>
+              <Button
+                size="xs"
                 onClick={() => handleAddStation(station)}
                 disabled={isStationAdded(station.id)}
               >
                 {isStationAdded(station.id) ? 'Added' : 'Add'}
-              </button>
-            </li>
+              </Button>
+            </Group>
           ))}
-        </ul>
+        </Stack>
       )}
-    </section>
+    </Stack>
   )
 }

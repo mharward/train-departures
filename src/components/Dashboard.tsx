@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { AppShell, Group, Title, Text, Button, SimpleGrid, Stack, Center } from '@mantine/core'
 import { StationCard } from './StationCard'
 import type { Station, DeparturesMap, ErrorsMap } from '../types'
 
@@ -55,40 +56,64 @@ export function Dashboard({
   }
 
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>Train Departures</h1>
-        <div className="header-controls">
-          <div className="refresh-info">
-            <span className="current-time">{formatTime(lastUpdated)}</span>
-            {loading ? (
-              <span className="update-status">Updating...</span>
-            ) : (
-              <span className="update-status">
-                {formatElapsed(elapsed)}
-                {autoRefresh && ` · next in ${countdown}s`}
-              </span>
-            )}
-            <button className="refresh-button" onClick={onRefresh} disabled={loading}>
-              Refresh
-            </button>
-          </div>
-          <button className="settings-button" onClick={onOpenSettings}>
-            Settings
-          </button>
-        </div>
-      </header>
+    <AppShell
+      header={{ height: 60 }}
+      padding="md"
+      styles={{
+        main: {
+          backgroundColor: 'var(--mantine-color-body)',
+          minHeight: '100vh',
+        },
+        header: {
+          backgroundColor: 'var(--mantine-color-default)',
+          borderBottom: '1px solid var(--mantine-color-default-border)',
+        },
+      }}
+    >
+      <AppShell.Header p="sm">
+        <Group justify="space-between" h="100%">
+          <Title order={3}>Train Departures</Title>
 
-      <main className="dashboard-content">
+          <Group gap="md">
+            <Group gap="xs">
+              <Text size="lg" fw={600} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                {formatTime(lastUpdated)}
+              </Text>
+              <Text size="xs" c="dimmed" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                {loading ? 'Updating...' : (
+                  <>
+                    {formatElapsed(elapsed)}
+                    {autoRefresh && ` · next in ${countdown}s`}
+                  </>
+                )}
+              </Text>
+              <Button
+                variant="default"
+                size="xs"
+                onClick={onRefresh}
+                disabled={loading}
+              >
+                Refresh
+              </Button>
+            </Group>
+
+            <Button variant="default" size="sm" onClick={onOpenSettings}>
+              Settings
+            </Button>
+          </Group>
+        </Group>
+      </AppShell.Header>
+
+      <AppShell.Main>
         {stations.length === 0 ? (
-          <div className="empty-state">
-            <p>No stations configured.</p>
-            <button className="add-station-cta" onClick={onOpenSettings}>
-              Add a Station
-            </button>
-          </div>
+          <Center h="50vh">
+            <Stack align="center" gap="md">
+              <Text c="dimmed">No stations configured.</Text>
+              <Button onClick={onOpenSettings}>Add a Station</Button>
+            </Stack>
+          </Center>
         ) : (
-          <div className="stations-grid">
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
             {stations.map((station) => (
               <StationCard
                 key={station.id}
@@ -98,9 +123,9 @@ export function Dashboard({
                 showPlatform={showPlatform}
               />
             ))}
-          </div>
+          </SimpleGrid>
         )}
-      </main>
-    </div>
+      </AppShell.Main>
+    </AppShell>
   )
 }

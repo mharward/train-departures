@@ -2,6 +2,7 @@
  * Schedule picker for setting station visibility times
  */
 
+import { Checkbox, Group, Text, Stack, Button, TextInput, Alert } from '@mantine/core'
 import { getDefaultSchedule } from '../../utils/schedule'
 import type { Schedule } from '../../types'
 
@@ -52,60 +53,58 @@ export function SchedulePicker({
   }
 
   return (
-    <div className="schedule-section">
-      <label className="schedule-enable">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => handleEnableSchedule(e.target.checked)}
-        />
-        Only show during scheduled times
-      </label>
+    <Stack gap="sm">
+      <Checkbox
+        label="Only show during scheduled times"
+        checked={enabled}
+        onChange={(e) => handleEnableSchedule(e.currentTarget.checked)}
+      />
 
       {enabled && (
-        <div className="schedule-options">
-          <div className="schedule-times">
-            <div className="time-field">
-              <label htmlFor={`start-${stationId}`}>From</label>
-              <input
-                type="time"
-                id={`start-${stationId}`}
-                value={startTime}
-                onChange={(e) => onStartTimeChange(e.target.value)}
-              />
-            </div>
-            <div className="time-field">
-              <label htmlFor={`end-${stationId}`}>To</label>
-              <input
-                type="time"
-                id={`end-${stationId}`}
-                value={endTime}
-                onChange={(e) => onEndTimeChange(e.target.value)}
-              />
-            </div>
-          </div>
+        <Stack gap="sm" pl="md">
+          <Group gap="md">
+            <TextInput
+              type="time"
+              label="From"
+              id={`start-${stationId}`}
+              value={startTime}
+              onChange={(e) => onStartTimeChange(e.currentTarget.value)}
+              size="sm"
+              style={{ width: 120 }}
+            />
+            <TextInput
+              type="time"
+              label="To"
+              id={`end-${stationId}`}
+              value={endTime}
+              onChange={(e) => onEndTimeChange(e.currentTarget.value)}
+              size="sm"
+              style={{ width: 120 }}
+            />
+          </Group>
 
-          <div className="day-picker">
+          <Group gap="xs">
             {DAY_LABELS.map((label, index) => (
-              <button
+              <Button
                 key={index}
-                type="button"
-                className={`day-button ${days.includes(index) ? 'active' : ''}`}
+                size="xs"
+                variant={days.includes(index) ? 'filled' : 'default'}
                 onClick={() => toggleDay(index)}
+                style={{ minWidth: 42 }}
               >
                 {label}
-              </button>
+              </Button>
             ))}
-          </div>
+          </Group>
 
           {days.length === 0 && (
-            <span className="schedule-warning">
-              No days selected - station will never be visible
-            </span>
+            <Alert color="yellow" variant="light" p="xs">
+              <Text size="sm">No days selected - station will never be visible</Text>
+            </Alert>
           )}
-        </div>
+        </Stack>
       )}
-    </div>
+    </Stack>
   )
 }
 

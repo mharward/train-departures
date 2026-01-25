@@ -3,6 +3,7 @@
  */
 
 import { useState, FormEvent } from 'react'
+import { Stack, Group, Text, NumberInput, Button, Box } from '@mantine/core'
 import { TransportIcon } from '../TransportIcon'
 import { DestinationPicker } from './DestinationPicker'
 import { SchedulePicker, buildSchedule } from './SchedulePicker'
@@ -15,7 +16,7 @@ interface StationEditFormProps {
 }
 
 export function StationEditForm({ station, onSave, onCancel }: StationEditFormProps) {
-  const [minMinutes, setMinMinutes] = useState(station.minMinutes || 0)
+  const [minMinutes, setMinMinutes] = useState<number | string>(station.minMinutes || 0)
   const [destinations, setDestinations] = useState<Destination[]>(station.destinations || [])
 
   // Schedule state
@@ -27,7 +28,7 @@ export function StationEditForm({ station, onSave, onCancel }: StationEditFormPr
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     const updates: Partial<Station> = {
-      minMinutes: minMinutes || 0,
+      minMinutes: typeof minMinutes === 'number' ? minMinutes : 0,
       destinations,
       destinationFilter: '', // Clear legacy field when saving
       schedule: buildSchedule(scheduleEnabled, startTime, endTime, days),
@@ -36,54 +37,64 @@ export function StationEditForm({ station, onSave, onCancel }: StationEditFormPr
   }
 
   return (
-    <form className="station-edit-form" onSubmit={handleSubmit}>
-      <div className="edit-form-header">
-        <TransportIcon type={station.type} size={20} />
-        <span className="edit-form-station-name" title={station.name}>
-          {station.name}
-        </span>
-      </div>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      p="md"
+      style={{
+        backgroundColor: 'var(--mantine-color-default)',
+        borderRadius: 'var(--mantine-radius-sm)',
+      }}
+    >
+      <Stack gap="md">
+        <Group gap="xs" wrap="nowrap">
+          <TransportIcon type={station.type} size={20} />
+          <Text fw={600} truncate title={station.name}>
+            {station.name}
+          </Text>
+        </Group>
 
-      <DestinationPicker
-        stationType={station.type}
-        destinations={destinations}
-        onChange={setDestinations}
-      />
-
-      <div className="edit-field">
-        <label htmlFor={`min-${station.id}`}>Walk time (minutes)</label>
-        <input
-          type="number"
-          id={`min-${station.id}`}
-          min="0"
-          max="60"
-          value={minMinutes}
-          onChange={(e) => setMinMinutes(parseInt(e.target.value, 10) || 0)}
+        <DestinationPicker
+          stationType={station.type}
+          destinations={destinations}
+          onChange={setDestinations}
         />
-        <span className="field-hint">Hide departures sooner than this</span>
-      </div>
 
-      <SchedulePicker
-        stationId={station.id}
-        enabled={scheduleEnabled}
-        startTime={startTime}
-        endTime={endTime}
-        days={days}
-        onEnabledChange={setScheduleEnabled}
-        onStartTimeChange={setStartTime}
-        onEndTimeChange={setEndTime}
-        onDaysChange={setDays}
-        hasExistingSchedule={!!station.schedule}
-      />
+        <Stack gap={4}>
+          <NumberInput
+            label="Walk time (minutes)"
+            min={0}
+            max={60}
+            value={minMinutes}
+            onChange={setMinMinutes}
+            size="sm"
+            style={{ maxWidth: 150 }}
+          />
+          <Text size="xs" c="dimmed">
+            Hide departures sooner than this
+          </Text>
+        </Stack>
 
-      <div className="edit-actions">
-        <button type="submit" className="save-button">
-          Save
-        </button>
-        <button type="button" className="cancel-button" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    </form>
+        <SchedulePicker
+          stationId={station.id}
+          enabled={scheduleEnabled}
+          startTime={startTime}
+          endTime={endTime}
+          days={days}
+          onEnabledChange={setScheduleEnabled}
+          onStartTimeChange={setStartTime}
+          onEndTimeChange={setEndTime}
+          onDaysChange={setDays}
+          hasExistingSchedule={!!station.schedule}
+        />
+
+        <Group gap="sm" justify="flex-end">
+          <Button type="button" variant="default" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">Save</Button>
+        </Group>
+      </Stack>
+    </Box>
   )
 }

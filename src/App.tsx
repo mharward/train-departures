@@ -1,15 +1,16 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useMantineColorScheme } from '@mantine/core'
 import { Dashboard } from './components/Dashboard'
 import { Settings } from './components/Settings'
 import { useConfig } from './hooks/useConfig'
 import { useDepartures } from './hooks/useDepartures'
 import { filterVisibleStations } from './utils/schedule'
-import './App.css'
 
 function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [currentTime, setCurrentTime] = useState(() => new Date())
   const { config, addStation, updateStation, removeStation, updateSettings } = useConfig()
+  const { setColorScheme } = useMantineColorScheme()
 
   // Update current time every minute for schedule filtering
   useEffect(() => {
@@ -33,7 +34,16 @@ function App() {
     }
   )
 
-  // Apply theme to document
+  // Sync Mantine color scheme with config theme
+  useEffect(() => {
+    if (config.theme === 'system') {
+      setColorScheme('auto')
+    } else {
+      setColorScheme(config.theme)
+    }
+  }, [config.theme, setColorScheme])
+
+  // Also apply theme to document for legacy CSS variables
   useEffect(() => {
     const applyTheme = (theme: string) => {
       if (theme === 'system') {

@@ -1,3 +1,4 @@
+import { Badge } from '@mantine/core'
 import { getLineColor, getContrastColor } from '../utils/modeColors'
 
 interface LineIndicatorProps {
@@ -11,14 +12,19 @@ export function LineIndicator({ lineId, lineName, modeName }: LineIndicatorProps
   const textColor = getContrastColor(bgColor)
 
   return (
-    <span
-      className="line-indicator"
-      style={{
-        backgroundColor: bgColor,
-        color: textColor,
+    <Badge
+      size="xs"
+      radius="xs"
+      styles={{
+        root: {
+          backgroundColor: bgColor,
+          color: textColor,
+          fontWeight: 600,
+          textTransform: 'none',
+        },
       }}
     >
       {lineName}
-    </span>
+    </Badge>
   )
 }

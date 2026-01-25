@@ -1,3 +1,4 @@
+import { Card, Group, Text, Stack } from '@mantine/core'
 import { DepartureRow } from './DepartureRow'
 import { TransportIcon } from './TransportIcon'
 import { getFilterSummary } from '../utils/stationDisplay'
@@ -15,23 +16,41 @@ export function StationCard({ station, departures, error, showPlatform }: Statio
   const filterSummary = getFilterSummary(station)
 
   return (
-    <div className="station-card">
-      <div className="station-header">
-        <TransportIcon type={station.type} size={24} />
-        <h2 className="station-name" title={station.name}>
-          {station.name}
-        </h2>
-        {filterSummary && (
-          <span className="filter-summary" title={filterSummary}>
-            {filterSummary}
-          </span>
+    <Card padding={0} radius="md" withBorder>
+      {/* Header */}
+      <Card.Section
+        p="sm"
+        style={{
+          backgroundColor: 'var(--mantine-color-default)',
+          borderBottom: '1px solid var(--mantine-color-default-border)',
+        }}
+      >
+        <Group gap="xs" wrap="nowrap">
+          <TransportIcon type={station.type} size={24} />
+          <Text fw={600} truncate title={station.name}>
+            {station.name}
+          </Text>
+          {filterSummary && (
+            <Text size="xs" c="dimmed" truncate title={filterSummary} style={{ flexShrink: 1 }}>
+              {filterSummary}
+            </Text>
+          )}
+        </Group>
+      </Card.Section>
+
+      {/* Departures List */}
+      <Stack gap={0} py="xs">
+        {error && (
+          <Text c="red" ta="center" py="xl" px="md">
+            Unable to load departures
+          </Text>
         )}
-      </div>
 
-      <div className="departures-list">
-        {error && <div className="error-message">Unable to load departures</div>}
-
-        {!error && !hasDepartures && <div className="no-departures">No upcoming departures</div>}
+        {!error && !hasDepartures && (
+          <Text c="dimmed" ta="center" py="xl" px="md">
+            No upcoming departures
+          </Text>
+        )}
 
         {hasDepartures &&
           departures
@@ -43,7 +62,7 @@ export function StationCard({ station, departures, error, showPlatform }: Statio
                 showPlatform={showPlatform}
               />
             ))}
-      </div>
-    </div>
+      </Stack>
+    </Card>
   )
 }

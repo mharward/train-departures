@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { Stack, TextInput, Group, Badge, Button, Text, Loader, CloseButton } from '@mantine/core'
 import { searchStations } from '../../utils/api'
 import { TransportIcon } from '../TransportIcon'
 import type { Destination, StationSearchResult, Station } from '../../types'
@@ -61,71 +62,94 @@ export function DestinationPicker({ stationType, destinations, onChange }: Desti
   }
 
   return (
-    <div className="edit-field destination-picker">
-      <label>Filter by destination (optional)</label>
+    <Stack gap="xs">
+      <Text size="sm" fw={500}>
+        Filter by destination (optional)
+      </Text>
 
       {/* Selected destinations */}
       {destinations.length > 0 ? (
-        <div className="destination-chips">
+        <Group gap="xs">
           {destinations.map((dest) => (
-            <span key={dest.id} className="destination-chip">
+            <Badge
+              key={dest.id}
+              variant="light"
+              rightSection={
+                <CloseButton
+                  size="xs"
+                  onClick={() => removeDestination(dest.id)}
+                  aria-label={`Remove ${dest.name}`}
+                />
+              }
+              styles={{ root: { paddingRight: 4 } }}
+            >
               {dest.name}
-              <button
-                type="button"
-                className="chip-remove"
-                onClick={() => removeDestination(dest.id)}
-                aria-label={`Remove ${dest.name}`}
-              >
-                &times;
-              </button>
-            </span>
+            </Badge>
           ))}
-        </div>
+        </Group>
       ) : (
-        <div className="destination-empty">Any destination</div>
+        <Text size="sm" c="dimmed">
+          Any destination
+        </Text>
       )}
 
       {/* Destination search */}
-      <div className="destination-search">
-        <input
-          type="text"
-          placeholder="Search for a destination..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        {searching && <span className="search-loading">Searching...</span>}
-      </div>
+      <TextInput
+        placeholder="Search for a destination..."
+        value={query}
+        onChange={(e) => setQuery(e.currentTarget.value)}
+        size="sm"
+        rightSection={searching ? <Loader size="xs" /> : null}
+      />
 
       {/* Search results */}
       {results.length > 0 && (
-        <ul className="destination-results">
+        <Stack
+          gap={0}
+          style={{
+            border: '1px solid var(--mantine-color-default-border)',
+            borderRadius: 'var(--mantine-radius-sm)',
+            maxHeight: 200,
+            overflowY: 'auto',
+          }}
+        >
           {results.map((result) => (
-            <li key={result.id} className="destination-result-item">
+            <Group
+              key={result.id}
+              gap="sm"
+              p="xs"
+              wrap="nowrap"
+              style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}
+            >
               <TransportIcon type={result.type} size={18} />
-              <div className="destination-result-info">
-                <span className="destination-result-name" title={result.name}>
+              <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                <Text size="sm" truncate title={result.name}>
                   {result.name}
-                </span>
-                {result.crs && <span className="destination-result-crs">{result.crs}</span>}
-              </div>
-              <button
-                type="button"
-                className="add-destination-button"
+                </Text>
+                {result.crs && (
+                  <Text size="xs" c="dimmed">
+                    {result.crs}
+                  </Text>
+                )}
+              </Stack>
+              <Button
+                size="xs"
+                variant="light"
                 onClick={() => addDestination(result)}
                 disabled={destinations.some((d) => d.id === result.id)}
               >
                 {destinations.some((d) => d.id === result.id) ? 'Added' : 'Add'}
-              </button>
-            </li>
+              </Button>
+            </Group>
           ))}
-        </ul>
+        </Stack>
       )}
 
-      <span className="field-hint">
+      <Text size="xs" c="dimmed">
         {stationType === 'national-rail'
           ? 'Matches final destination or any stop along the route'
           : 'Matches final destination only'}
-      </span>
-    </div>
+      </Text>
+    </Stack>
   )
 }

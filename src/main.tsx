@@ -1,7 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import { MantineProvider } from '@mantine/core'
+import { theme } from './theme'
 import App from './App'
+
+// Mantine CSS
+import '@mantine/core/styles.css'
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {
@@ -10,6 +14,8 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <MantineProvider theme={theme} defaultColorScheme="dark">
+      <App />
+    </MantineProvider>
   </StrictMode>
 )

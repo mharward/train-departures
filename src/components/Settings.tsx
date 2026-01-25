@@ -3,6 +3,18 @@
  */
 
 import { useState, useCallback } from 'react'
+import {
+  Modal,
+  Stack,
+  Group,
+  Text,
+  Title,
+  Button,
+  Checkbox,
+  NumberInput,
+  Select,
+  Divider,
+} from '@mantine/core'
 import { getFilterSummary } from '../utils/stationDisplay'
 import { TransportIcon } from './TransportIcon'
 import { StationSearchBox, StationEditForm } from './settings/index'
@@ -43,132 +55,138 @@ export function Settings({
   )
 
   return (
-    <div className="settings-overlay" onClick={onClose}>
-      <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="settings-header">
-          <h2>Settings</h2>
-          <button className="close-button" onClick={onClose}>
-            &times;
-          </button>
-        </div>
+    <Modal
+      opened={true}
+      onClose={onClose}
+      title={<Title order={3}>Settings</Title>}
+      size="lg"
+      styles={{
+        body: { padding: 'var(--mantine-spacing-md)' },
+        header: { backgroundColor: 'var(--mantine-color-default)' },
+        content: { backgroundColor: 'var(--mantine-color-body)' },
+      }}
+    >
+      <Stack gap="lg">
+        <StationSearchBox onAddStation={onAddStation} isStationAdded={isStationAdded} />
 
-        <div className="settings-content">
-          <StationSearchBox onAddStation={onAddStation} isStationAdded={isStationAdded} />
+        <Divider />
 
-          {/* Configured Stations */}
-          <section className="settings-section">
-            <h3>Your Stations</h3>
-            {config.stations.length === 0 ? (
-              <p className="no-stations">No stations configured. Search above to add one.</p>
-            ) : (
-              <ul className="station-list">
-                {config.stations.map((station) => (
-                  <li key={station.id} className="station-item">
-                    {editingStation === station.id ? (
-                      <StationEditForm
-                        station={station}
-                        onSave={(updates) => handleSaveEdit(station.id, updates)}
-                        onCancel={() => setEditingStation(null)}
-                      />
-                    ) : (
-                      <div className="station-display">
-                        <TransportIcon type={station.type} size={24} />
-                        <div className="station-info">
-                          <span className="station-name" title={station.name}>
-                            {station.name}
-                          </span>
-                          {getFilterSummary(station, { includeSchedule: true }) && (
-                            <span
-                              className="station-filter-summary"
-                              title={getFilterSummary(station, { includeSchedule: true }) || undefined}
-                            >
-                              {getFilterSummary(station, { includeSchedule: true })}
-                            </span>
-                          )}
-                        </div>
-                        <div className="station-actions">
-                          <button
-                            className="edit-button"
-                            onClick={() => setEditingStation(station.id)}
+        {/* Configured Stations */}
+        <Stack gap="sm">
+          <Title order={5}>Your Stations</Title>
+          {config.stations.length === 0 ? (
+            <Text c="dimmed">No stations configured. Search above to add one.</Text>
+          ) : (
+            <Stack gap="sm">
+              {config.stations.map((station) => (
+                <div key={station.id}>
+                  {editingStation === station.id ? (
+                    <StationEditForm
+                      station={station}
+                      onSave={(updates) => handleSaveEdit(station.id, updates)}
+                      onCancel={() => setEditingStation(null)}
+                    />
+                  ) : (
+                    <Group
+                      gap="sm"
+                      wrap="nowrap"
+                      p="sm"
+                      style={{
+                        backgroundColor: 'var(--mantine-color-default)',
+                        borderRadius: 'var(--mantine-radius-sm)',
+                      }}
+                    >
+                      <TransportIcon type={station.type} size={24} />
+                      <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                        <Text fw={500} truncate title={station.name}>
+                          {station.name}
+                        </Text>
+                        {getFilterSummary(station, { includeSchedule: true }) && (
+                          <Text
+                            size="xs"
+                            c="dimmed"
+                            truncate
+                            title={getFilterSummary(station, { includeSchedule: true }) || undefined}
                           >
-                            Edit
-                          </button>
-                          <button
-                            className="remove-button"
-                            onClick={() => onRemoveStation(station.id)}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                            {getFilterSummary(station, { includeSchedule: true })}
+                          </Text>
+                        )}
+                      </Stack>
+                      <Group gap="xs">
+                        <Button
+                          variant="default"
+                          size="xs"
+                          onClick={() => setEditingStation(station.id)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="xs"
+                          color="red"
+                          onClick={() => onRemoveStation(station.id)}
+                        >
+                          Remove
+                        </Button>
+                      </Group>
+                    </Group>
+                  )}
+                </div>
+              ))}
+            </Stack>
+          )}
+        </Stack>
 
-          {/* General Settings */}
-          <section className="settings-section">
-            <h3>Display Settings</h3>
+        <Divider />
 
-            <div className="setting-row">
-              <label htmlFor="autoRefresh">
-                <input
-                  type="checkbox"
-                  id="autoRefresh"
-                  checked={config.autoRefresh}
-                  onChange={(e) => onUpdateSettings({ autoRefresh: e.target.checked })}
-                />
-                Auto-refresh departures
-              </label>
-            </div>
+        {/* General Settings */}
+        <Stack gap="sm">
+          <Title order={5}>Display Settings</Title>
 
-            {config.autoRefresh && (
-              <div className="setting-row">
-                <label htmlFor="refreshInterval">Refresh interval (seconds)</label>
-                <input
-                  type="number"
-                  id="refreshInterval"
-                  min="10"
-                  max="120"
-                  value={config.refreshInterval}
-                  onChange={(e) =>
-                    onUpdateSettings({
-                      refreshInterval: parseInt(e.target.value, 10) || 30,
-                    })
-                  }
-                />
-              </div>
-            )}
+          <Checkbox
+            label="Auto-refresh departures"
+            checked={config.autoRefresh}
+            onChange={(e) => onUpdateSettings({ autoRefresh: e.currentTarget.checked })}
+          />
 
-            <div className="setting-row">
-              <label htmlFor="showPlatform">
-                <input
-                  type="checkbox"
-                  id="showPlatform"
-                  checked={config.showPlatform}
-                  onChange={(e) => onUpdateSettings({ showPlatform: e.target.checked })}
-                />
-                Show platform numbers
-              </label>
-            </div>
+          {config.autoRefresh && (
+            <NumberInput
+              label="Refresh interval (seconds)"
+              min={10}
+              max={120}
+              value={config.refreshInterval}
+              onChange={(value) =>
+                onUpdateSettings({
+                  refreshInterval: typeof value === 'number' ? value : 30,
+                })
+              }
+              size="sm"
+              style={{ maxWidth: 200 }}
+            />
+          )}
 
-            <div className="setting-row">
-              <label htmlFor="theme">Theme</label>
-              <select
-                id="theme"
-                value={config.theme}
-                onChange={(e) => onUpdateSettings({ theme: e.target.value as AppConfig['theme'] })}
-              >
-                <option value="system">System</option>
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-              </select>
-            </div>
-          </section>
-        </div>
-      </div>
-    </div>
+          <Checkbox
+            label="Show platform numbers"
+            checked={config.showPlatform}
+            onChange={(e) => onUpdateSettings({ showPlatform: e.currentTarget.checked })}
+          />
+
+          <Select
+            label="Theme"
+            value={config.theme}
+            onChange={(value) =>
+              onUpdateSettings({ theme: (value as AppConfig['theme']) || 'system' })
+            }
+            data={[
+              { value: 'system', label: 'System' },
+              { value: 'dark', label: 'Dark' },
+              { value: 'light', label: 'Light' },
+            ]}
+            size="sm"
+            style={{ maxWidth: 200 }}
+          />
+        </Stack>
+      </Stack>
+    </Modal>
   )
 }
