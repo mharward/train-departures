@@ -11,7 +11,7 @@ const defaultConfig = {
 }
 
 // Migrate station config from old format to new format
-function migrateStation(station) {
+export function migrateStation(station) {
   const migrated = { ...station }
 
   // Migrate old destinationFilter string to destinations array

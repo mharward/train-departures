@@ -5,7 +5,7 @@ const HUXLEY_BASE_URL = 'https://huxley2.azurewebsites.net'
 const TFL_MODES = ['tube', 'dlr', 'overground', 'elizabeth-line']
 
 // Find child stop IDs for rail modes from a hub station
-function findRailChildStops(stationData) {
+export function findRailChildStops(stationData) {
   const childIds = new Set()
 
   function findChildren(stop) {
@@ -30,7 +30,7 @@ function findRailChildStops(stationData) {
 }
 
 // Convert time string (HH:MM) to seconds from now
-function timeToSeconds(timeStr) {
+export function timeToSeconds(timeStr) {
   if (!timeStr) return Infinity
 
   const now = new Date()
@@ -102,7 +102,7 @@ export async function fetchTflArrivals(stationId) {
 }
 
 // Extract calling points from a service
-function extractCallingPoints(service) {
+export function extractCallingPoints(service) {
   const points = []
   const callingPointsList = service.subsequentCallingPoints || []
 
