@@ -1,32 +1,7 @@
 import { DepartureRow } from './DepartureRow'
 import { TransportIcon } from './TransportIcon'
+import { getFilterSummary } from '../utils/stationDisplay'
 import type { Station, FilteredArrival } from '../types'
-
-// Generate filter summary for the header
-function getFilterSummary(station: Station): string | null {
-  const parts: string[] = []
-
-  // Show destinations from new array format
-  if (station.destinations && station.destinations.length > 0) {
-    const names = station.destinations.map((d) => d.name)
-    if (names.length <= 2) {
-      parts.push(`to ${names.join(', ')}`)
-    } else {
-      parts.push(`to ${names[0]} +${names.length - 1} more`)
-    }
-  }
-  // Legacy: show old destination filter
-  else if (station.destinationFilter && station.destinationFilter.trim()) {
-    parts.push(`to ${station.destinationFilter}`)
-  }
-
-  const min = station.minMinutes || 0
-  if (min > 0) {
-    parts.push(`>${min} min`)
-  }
-
-  return parts.length > 0 ? parts.join(', ') : null
-}
 
 interface StationCardProps {
   station: Station
