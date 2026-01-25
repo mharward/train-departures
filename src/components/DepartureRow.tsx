@@ -19,7 +19,7 @@ export function DepartureRow({ departure, showPlatform }: DepartureRowProps) {
   return (
     <Group
       gap="md"
-      p="sm"
+      py="xs"
       px="md"
       wrap="nowrap"
       style={{

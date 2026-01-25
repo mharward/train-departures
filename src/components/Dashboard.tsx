@@ -61,11 +61,11 @@ export function Dashboard({
       padding="md"
       styles={{
         main: {
-          backgroundColor: 'var(--mantine-color-body)',
+          backgroundColor: 'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-9))',
           minHeight: '100vh',
         },
         header: {
-          backgroundColor: 'var(--mantine-color-default)',
+          backgroundColor: 'light-dark(var(--mantine-color-white), var(--mantine-color-dark-7))',
           borderBottom: '1px solid var(--mantine-color-default-border)',
         },
       }}

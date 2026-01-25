@@ -21,7 +21,7 @@ export function StationCard({ station, departures, error, showPlatform }: Statio
       <Card.Section
         p="sm"
         style={{
-          backgroundColor: 'var(--mantine-color-default)',
+          backgroundColor: 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7))',
           borderBottom: '1px solid var(--mantine-color-default-border)',
         }}
       >
@@ -39,7 +39,7 @@ export function StationCard({ station, departures, error, showPlatform }: Statio
       </Card.Section>
 
       {/* Departures List */}
-      <Stack gap={0} py="xs">
+      <Stack gap={0}>
         {error && (
           <Text c="red" ta="center" py="xl" px="md">
             Unable to load departures

@@ -36,6 +36,9 @@ export function useDepartures(
     stationsRef.current = stations
   }, [stations])
 
+  // Stable string of station IDs to detect actual station changes
+  const stationIds = stations.map((s) => s.id).join(',')
+
   // Re-filter raw arrivals to update timeToStation and remove departed trains
   const updateDepartures = useCallback(() => {
     const currentStations = stationsRef.current
@@ -58,7 +61,8 @@ export function useDepartures(
 
   // Fetch departures for all stations
   const fetchAllDepartures = useCallback(async () => {
-    if (!stations || stations.length === 0) {
+    const currentStations = stationsRef.current
+    if (!currentStations || currentStations.length === 0) {
       rawArrivalsRef.current = {}
       setDepartures({})
       setLoading(false)
@@ -69,7 +73,7 @@ export function useDepartures(
     const newErrors: ErrorsMap = {}
 
     await Promise.all(
-      stations.map(async (station) => {
+      currentStations.map(async (station) => {
         try {
           const arrivals = await fetchArrivals(station)
           newRawArrivals[station.id] = arrivals
@@ -93,7 +97,7 @@ export function useDepartures(
 
     // Immediately update departures with fresh data
     updateDepartures()
-  }, [stations, refreshInterval, updateDepartures])
+  }, [refreshInterval, updateDepartures])
 
   // Manual refresh
   const refresh = useCallback(() => {
@@ -114,7 +118,8 @@ export function useDepartures(
         clearInterval(intervalRef.current)
       }
     }
-  }, [fetchAllDepartures, autoRefresh, refreshInterval])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stationIds, autoRefresh, refreshInterval])
 
   // Tick every second to update countdowns and filter departed trains
   useEffect(() => {
