@@ -4,6 +4,7 @@ const STORAGE_KEY = 'train-departures-config'
 
 const defaultConfig = {
   stations: [],
+  autoRefresh: false,
   refreshInterval: 60,
   showPlatform: true,
   theme: 'system',

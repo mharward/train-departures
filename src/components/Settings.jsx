@@ -204,20 +204,36 @@ export function Settings({
             <h3>Display Settings</h3>
 
             <div className="setting-row">
-              <label htmlFor="refreshInterval">Refresh interval (seconds)</label>
-              <input
-                type="number"
-                id="refreshInterval"
-                min="10"
-                max="120"
-                value={config.refreshInterval}
-                onChange={(e) =>
-                  onUpdateSettings({
-                    refreshInterval: parseInt(e.target.value, 10) || 30,
-                  })
-                }
-              />
+              <label htmlFor="autoRefresh">
+                <input
+                  type="checkbox"
+                  id="autoRefresh"
+                  checked={config.autoRefresh}
+                  onChange={(e) =>
+                    onUpdateSettings({ autoRefresh: e.target.checked })
+                  }
+                />
+                Auto-refresh departures
+              </label>
             </div>
+
+            {config.autoRefresh && (
+              <div className="setting-row">
+                <label htmlFor="refreshInterval">Refresh interval (seconds)</label>
+                <input
+                  type="number"
+                  id="refreshInterval"
+                  min="10"
+                  max="120"
+                  value={config.refreshInterval}
+                  onChange={(e) =>
+                    onUpdateSettings({
+                      refreshInterval: parseInt(e.target.value, 10) || 30,
+                    })
+                  }
+                />
+              </div>
+            )}
 
             <div className="setting-row">
               <label htmlFor="showPlatform">

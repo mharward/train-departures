@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { fetchArrivals, filterArrivals } from '../utils/api'
 
-export function useDepartures(stations, refreshInterval = 30) {
+export function useDepartures(stations, { autoRefresh = false, refreshInterval = 30 } = {}) {
   const [departures, setDepartures] = useState({})
   const [loading, setLoading] = useState(true)
   const [errors, setErrors] = useState({})
@@ -9,48 +9,72 @@ export function useDepartures(stations, refreshInterval = 30) {
   const [countdown, setCountdown] = useState(refreshInterval)
 
   const intervalRef = useRef(null)
-  const countdownRef = useRef(null)
+  const tickRef = useRef(null)
+  const rawArrivalsRef = useRef({})
+  const stationsRef = useRef(stations)
+
+  // Keep stations ref updated for use in tick interval
+  useEffect(() => {
+    stationsRef.current = stations
+  }, [stations])
+
+  // Re-filter raw arrivals to update timeToStation and remove departed trains
+  const updateDepartures = useCallback(() => {
+    const stations = stationsRef.current
+    if (!stations || stations.length === 0) return
+
+    const newDepartures = {}
+    for (const station of stations) {
+      const raw = rawArrivalsRef.current[station.id]
+      if (raw) {
+        newDepartures[station.id] = filterArrivals(raw, {
+          minMinutes: station.minMinutes || 0,
+          maxMinutes: station.maxMinutes || 60,
+          destinationFilter: station.destinationFilter || '',
+        })
+      }
+    }
+    setDepartures(newDepartures)
+  }, [])
 
   // Fetch departures for all stations
   const fetchAllDepartures = useCallback(async () => {
     if (!stations || stations.length === 0) {
+      rawArrivalsRef.current = {}
       setDepartures({})
       setLoading(false)
       return
     }
 
-    const newDepartures = {}
+    const newRawArrivals = {}
     const newErrors = {}
 
     await Promise.all(
       stations.map(async (station) => {
         try {
-          // Pass full station object (needed to determine TfL vs National Rail)
           const arrivals = await fetchArrivals(station)
-          const filtered = filterArrivals(arrivals, {
-            minMinutes: station.minMinutes || 0,
-            maxMinutes: station.maxMinutes || 60,
-            destinationFilter: station.destinationFilter || '',
-          })
-          newDepartures[station.id] = filtered
+          newRawArrivals[station.id] = arrivals
           newErrors[station.id] = null
         } catch (error) {
           console.error(`Error fetching departures for ${station.name}:`, error)
           newErrors[station.id] = error.message
-          // Keep old data if available
-          if (departures[station.id]) {
-            newDepartures[station.id] = departures[station.id]
+          // Keep old raw data if available
+          if (rawArrivalsRef.current[station.id]) {
+            newRawArrivals[station.id] = rawArrivalsRef.current[station.id]
           }
         }
       })
     )
 
-    setDepartures(newDepartures)
+    rawArrivalsRef.current = newRawArrivals
     setErrors(newErrors)
     setLastUpdated(new Date())
     setLoading(false)
     setCountdown(refreshInterval)
-  }, [stations, refreshInterval])
+
+    // Immediately update departures with fresh data
+    updateDepartures()
+  }, [stations, refreshInterval, updateDepartures])
 
   // Manual refresh
   const refresh = useCallback(() => {
@@ -58,27 +82,36 @@ export function useDepartures(stations, refreshInterval = 30) {
     fetchAllDepartures()
   }, [fetchAllDepartures])
 
-  // Initial fetch and polling setup
+  // Initial fetch and auto-refresh polling
   useEffect(() => {
     fetchAllDepartures()
 
-    // Set up polling interval
-    intervalRef.current = setInterval(fetchAllDepartures, refreshInterval * 1000)
-
-    // Set up countdown
-    countdownRef.current = setInterval(() => {
-      setCountdown((prev) => (prev > 0 ? prev - 1 : refreshInterval))
-    }, 1000)
+    if (autoRefresh) {
+      intervalRef.current = setInterval(fetchAllDepartures, refreshInterval * 1000)
+    }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
       }
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current)
+    }
+  }, [fetchAllDepartures, autoRefresh, refreshInterval])
+
+  // Tick every second to update countdowns and filter departed trains
+  useEffect(() => {
+    tickRef.current = setInterval(() => {
+      updateDepartures()
+      if (autoRefresh) {
+        setCountdown((prev) => (prev > 0 ? prev - 1 : refreshInterval))
+      }
+    }, 1000)
+
+    return () => {
+      if (tickRef.current) {
+        clearInterval(tickRef.current)
       }
     }
-  }, [fetchAllDepartures, refreshInterval])
+  }, [updateDepartures, autoRefresh, refreshInterval])
 
   return {
     departures,

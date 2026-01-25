@@ -1,6 +1,10 @@
 import { LineIndicator } from './LineIndicator'
 import { formatMinutes } from '../utils/api'
 
+function formatTime(timestamp) {
+  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
 export function DepartureRow({ departure, showPlatform }) {
   const minutes = formatMinutes(departure.timeToStation)
   const isDue = minutes === 'Due'
@@ -9,6 +13,7 @@ export function DepartureRow({ departure, showPlatform }) {
     <div className={`departure-row ${isDue ? 'due' : ''}`}>
       <div className="departure-time">
         <span className="minutes">{minutes}</span>
+        <span className="departure-time-absolute">{formatTime(departure.expectedDeparture)}</span>
       </div>
 
       <div className="departure-info">

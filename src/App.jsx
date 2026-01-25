@@ -22,7 +22,10 @@ function App() {
     lastUpdated,
     countdown,
     refresh,
-  } = useDepartures(config.stations, config.refreshInterval)
+  } = useDepartures(config.stations, {
+    autoRefresh: config.autoRefresh,
+    refreshInterval: config.refreshInterval,
+  })
 
   // Apply theme to document
   useEffect(() => {
@@ -55,6 +58,7 @@ function App() {
         loading={loading}
         lastUpdated={lastUpdated}
         countdown={countdown}
+        autoRefresh={config.autoRefresh}
         showPlatform={config.showPlatform}
         onRefresh={refresh}
         onOpenSettings={() => setShowSettings(true)}

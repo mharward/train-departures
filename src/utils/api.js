@@ -88,10 +88,11 @@ export async function fetchTflArrivals(stationId) {
   }
 
   // Normalize to common format and sort
+  const now = Date.now()
   return data
     .map((arrival) => ({
       id: arrival.vehicleId || arrival.id,
-      timeToStation: arrival.timeToStation,
+      expectedDeparture: now + arrival.timeToStation * 1000,
       destinationName: arrival.destinationName || arrival.towards,
       lineName: arrival.lineName,
       lineId: arrival.lineId,
@@ -101,7 +102,7 @@ export async function fetchTflArrivals(stationId) {
       operator: null,
       source: 'tfl',
     }))
-    .sort((a, b) => a.timeToStation - b.timeToStation)
+    .sort((a, b) => a.expectedDeparture - b.expectedDeparture)
 }
 
 // Extract calling points from a service
@@ -158,7 +159,7 @@ export async function fetchNationalRailDepartures(crsCode) {
 
       return {
         id: service.serviceID,
-        timeToStation,
+        expectedDeparture: Date.now() + timeToStation * 1000,
         destinationName: destination,
         callingPoints, // Include intermediate stops
         lineName: service.operator,
@@ -170,7 +171,7 @@ export async function fetchNationalRailDepartures(crsCode) {
         source: 'national-rail',
       }
     })
-    .sort((a, b) => a.timeToStation - b.timeToStation)
+    .sort((a, b) => a.expectedDeparture - b.expectedDeparture)
 }
 
 // Unified fetch function - determines which API to use based on station type
@@ -245,43 +246,49 @@ export async function searchStations(query) {
   return [...nrResults, ...tflResults]
 }
 
-// Filter arrivals based on configuration
+// Filter arrivals based on configuration and calculate current timeToStation
 export function filterArrivals(arrivals, { minMinutes = 0, maxMinutes = 60, destinationFilter = '' }) {
   const minSeconds = minMinutes * 60
   const maxSeconds = maxMinutes * 60
+  const now = Date.now()
 
-  return arrivals.filter((arrival) => {
-    // Must be at least minMinutes away
-    if (arrival.timeToStation < minSeconds) {
-      return false
-    }
-
-    // Must be at most maxMinutes away
-    if (arrival.timeToStation > maxSeconds) {
-      return false
-    }
-
-    // Filter by destination or calling points (case-insensitive partial match)
-    if (destinationFilter && destinationFilter.trim()) {
-      const filter = destinationFilter.toLowerCase().trim()
-
-      // Check final destination
-      const destination = (arrival.destinationName || '').toLowerCase()
-      const matchesDestination = destination.includes(filter)
-
-      // Check calling points (intermediate stations)
-      const callingPoints = arrival.callingPoints || []
-      const matchesCallingPoint = callingPoints.some(
-        (point) => point.toLowerCase().includes(filter)
-      )
-
-      if (!matchesDestination && !matchesCallingPoint) {
+  return arrivals
+    .map((arrival) => ({
+      ...arrival,
+      timeToStation: Math.floor((arrival.expectedDeparture - now) / 1000),
+    }))
+    .filter((arrival) => {
+      // Must be at least minMinutes away
+      if (arrival.timeToStation < minSeconds) {
         return false
       }
-    }
 
-    return true
-  })
+      // Must be at most maxMinutes away
+      if (arrival.timeToStation > maxSeconds) {
+        return false
+      }
+
+      // Filter by destination or calling points (case-insensitive partial match)
+      if (destinationFilter && destinationFilter.trim()) {
+        const filter = destinationFilter.toLowerCase().trim()
+
+        // Check final destination
+        const destination = (arrival.destinationName || '').toLowerCase()
+        const matchesDestination = destination.includes(filter)
+
+        // Check calling points (intermediate stations)
+        const callingPoints = arrival.callingPoints || []
+        const matchesCallingPoint = callingPoints.some(
+          (point) => point.toLowerCase().includes(filter)
+        )
+
+        if (!matchesDestination && !matchesCallingPoint) {
+          return false
+        }
+      }
+
+      return true
+    })
 }
 
 // Format arrival time to minutes

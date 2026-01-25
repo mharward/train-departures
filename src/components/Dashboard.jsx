@@ -8,6 +8,7 @@ export function Dashboard({
   loading,
   lastUpdated,
   countdown,
+  autoRefresh,
   showPlatform,
   onRefresh,
   onOpenSettings,
@@ -50,7 +51,7 @@ export function Dashboard({
               <span className="update-status">Updating...</span>
             ) : (
               <span className="update-status">
-                {formatElapsed(elapsed)} · next in {countdown}s
+                {formatElapsed(elapsed)}{autoRefresh && ` · next in ${countdown}s`}
               </span>
             )}
             <button className="refresh-button" onClick={onRefresh} disabled={loading}>
