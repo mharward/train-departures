@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev      # Start Vite dev server (hot reload)
 npm run build    # Production build to dist/
 npm run lint     # Run ESLint
+npm run format   # Format code with Prettier
 npm run preview  # Preview production build
 ```
 
@@ -32,5 +33,15 @@ Both are public APIs requiring no authentication.
 ### Key Files
 
 - `src/utils/api.js` - API fetching, normalization, and filtering logic. Arrivals store `expectedDeparture` (absolute timestamp) rather than relative seconds so countdowns work without re-fetching.
+- `src/hooks/useConfig.js` - User settings with migration support for schema changes
 - `src/hooks/useDepartures.js` - Manages raw arrivals in a ref, re-filters every second to update countdowns
 - `src/utils/modeColors.js` - Official TfL line colors and National Rail operator colors
+- `src/components/TransportIcon.jsx` - TfL roundel and National Rail double-arrow SVG icons
+
+### Destination Filtering
+
+Stations have a `destinations` array for filtering trains:
+- Each destination has `id`, `name`, and optional `crs` code
+- Multiple destinations use OR logic (trains to ANY selected destination)
+- For National Rail, matches final destination AND calling points
+- Legacy `destinationFilter` string is migrated to `destinations` array on load

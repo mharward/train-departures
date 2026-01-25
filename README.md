@@ -14,7 +14,9 @@ A React + Vite app showing real-time train departures from nearby stations. Desi
 
 - Live countdown timers (auto-refresh available in settings)
 - Walk time buffer (hide trains you can't reach in time)
-- Destination filtering
+- Multi-destination filtering with station search (trains to ANY selected destination)
+- Schedule-based station visibility (show stations only at certain times/days)
+- TfL roundel and National Rail icons to distinguish station types
 - Official line/operator colors
 - Dark theme (default) for display-friendly viewing
 - Configuration persisted to localStorage
@@ -32,6 +34,9 @@ npm run dev
 # Build for production
 npm run build
 
+# Format code with Prettier
+npm run format
+
 # Preview production build
 npm run preview
 ```
@@ -42,10 +47,11 @@ Click the "Settings" button to:
 
 1. **Add stations** - Search for stations by name (supports both National Rail and TfL stations)
 2. **Set walk time** - Minutes it takes you to reach the station (departures sooner than this are hidden)
-3. **Filter destinations** - Show only trains going to a specific destination
-4. **Enable auto-refresh** - Optionally re-fetch data at a configurable interval
-5. **Toggle platform display** - Show/hide platform numbers
-6. **Switch theme** - Dark or light mode
+3. **Filter destinations** - Search and select multiple destination stations; shows trains going to ANY selected destination (for National Rail, also matches calling points)
+4. **Set schedule** - Optionally show stations only during certain times and days (e.g., weekday mornings)
+5. **Enable auto-refresh** - Optionally re-fetch data at a configurable interval
+6. **Toggle platform display** - Show/hide platform numbers
+7. **Switch theme** - Dark, light, or system
 
 Configuration is saved to localStorage and persists across page refreshes.
 
@@ -92,20 +98,22 @@ National Rail data is provided via [Huxley 2](https://github.com/jpsingleton/Hux
 
 ```
 src/
-├── main.jsx              # Entry point
-├── App.jsx               # Main app container
-├── App.css               # Component styles
-├── index.css             # Base styles
+├── main.jsx               # Entry point
+├── App.jsx                # Main app container
+├── App.css                # Component styles
+├── index.css              # Base styles
 ├── components/
-│   ├── Dashboard.jsx     # Main departure board display
-│   ├── StationCard.jsx   # Single station's departures
-│   ├── DepartureRow.jsx  # Individual departure row
-│   ├── Settings.jsx      # Configuration modal
-│   └── LineIndicator.jsx # Line color badge
+│   ├── Dashboard.jsx      # Main departure board display
+│   ├── StationCard.jsx    # Single station's departures
+│   ├── DepartureRow.jsx   # Individual departure row
+│   ├── Settings.jsx       # Configuration modal
+│   ├── LineIndicator.jsx  # Line color badge
+│   └── TransportIcon.jsx  # TfL/National Rail SVG icons
 ├── hooks/
-│   ├── useConfig.js      # localStorage config management
-│   └── useDepartures.js  # API fetching + polling
+│   ├── useConfig.js       # localStorage config management
+│   └── useDepartures.js   # API fetching + polling
 └── utils/
-    ├── api.js            # TfL + National Rail API wrapper
-    └── modeColors.js     # Line/operator color mapping
+    ├── api.js             # TfL + National Rail API wrapper
+    ├── modeColors.js      # Line/operator color mapping
+    └── schedule.js        # Time/day schedule utilities
 ```
