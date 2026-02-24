@@ -155,6 +155,7 @@ export function Dashboard({
                 station={station}
                 departures={departures[station.id]}
                 error={errors[station.id]}
+                loading={loading}
                 showPlatform={showPlatform}
               />
             ))}

@@ -1,4 +1,4 @@
-import { Card, Group, Text, Stack } from '@mantine/core'
+import { Card, Group, Text, Stack, Center, Loader } from '@mantine/core'
 import { DepartureRow } from './DepartureRow'
 import { TransportIcon } from './TransportIcon'
 import { getFilterSummary } from '../utils/stationDisplay'
@@ -8,11 +8,13 @@ interface StationCardProps {
   station: Station
   departures: FilteredArrival[] | undefined
   error: string | null | undefined
+  loading: boolean
   showPlatform: boolean
 }
 
-export function StationCard({ station, departures, error, showPlatform }: StationCardProps) {
+export function StationCard({ station, departures, error, loading, showPlatform }: StationCardProps) {
   const hasDepartures = departures && departures.length > 0
+  const isInitialLoad = loading && departures === undefined
   const filterSummary = getFilterSummary(station)
 
   return (
@@ -46,7 +48,13 @@ export function StationCard({ station, departures, error, showPlatform }: Statio
           </Text>
         )}
 
-        {!error && !hasDepartures && (
+        {!error && isInitialLoad && (
+          <Center py="xl" px="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+
+        {!error && !isInitialLoad && !hasDepartures && (
           <Text c="dimmed" ta="center" py="xl" px="md">
             No upcoming departures
           </Text>

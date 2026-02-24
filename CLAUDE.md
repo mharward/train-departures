@@ -5,12 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev      # Start Vite dev server (hot reload)
+npm run dev      # Start dev server via netlify dev (runs Vite + edge functions)
 npm run build    # Production build to dist/
 npm run lint     # Run ESLint
 npm run format   # Format code with Prettier
 npm run preview  # Preview production build
 ```
+
+`npm run dev` uses `netlify dev`, which runs Vite and serves the Darwin edge function
+locally at `http://localhost:8888`. Requires `DARWIN_ACCESS_TOKEN` in `.env`.
 
 ## Architecture
 
@@ -25,10 +28,8 @@ This is a React + Vite frontend app that displays real-time train departures fro
 
 ### APIs
 
-- **TfL Unified API** (`api.tfl.gov.uk`) - Tube, DLR, Overground, Elizabeth Line arrivals
-- **Huxley 2** (`huxley2.azurewebsites.net`) - National Rail departures via Darwin proxy
-
-Both are public APIs requiring no authentication.
+- **TfL Unified API** (`api.tfl.gov.uk`) - Tube, DLR, Overground, Elizabeth Line arrivals. Optional `VITE_TFL_API_KEY` env var for higher rate limits.
+- **Darwin SOAP API** (`lite.realtime.nationalrail.co.uk`) - National Rail departures, proxied via a Netlify edge function (`netlify/edge-functions/darwin.ts`). Requires `DARWIN_ACCESS_TOKEN`. Falls back to **Huxley 2** (`huxley2.azurewebsites.net`) if the edge function is unavailable.
 
 ### Key Files
 

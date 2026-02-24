@@ -80,4 +80,5 @@ export function filterArrivals(
 
       return true
     })
+    .sort((a, b) => a.timeToStation - b.timeToStation)
 }

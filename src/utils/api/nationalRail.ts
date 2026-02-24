@@ -1,5 +1,5 @@
 /**
- * National Rail API integration via Huxley 2 (Darwin proxy)
+ * National Rail API integration via Darwin edge function
  */
 
 import type {
@@ -10,7 +10,11 @@ import type {
   NationalRailStationResponse,
 } from '../../types'
 import { timeToSeconds } from './time'
+import { fetchWithRetry } from './retry'
+import { withCache } from './cache'
 
+const DARWIN_BASE_URL = '/api/darwin'
+// Station search uses Huxley 2 (no auth required)
 const HUXLEY_BASE_URL = 'https://huxley2.azurewebsites.net'
 
 /**
@@ -33,62 +37,66 @@ export function extractCallingPoints(service: NationalRailService): string[] {
 }
 
 /**
- * Fetch National Rail departures via Huxley 2
+ * Fetch National Rail departures via Darwin edge function
  */
 export async function fetchNationalRailDepartures(crsCode: string): Promise<Arrival[]> {
-  // Use expand=true to get calling points for intermediate station filtering
-  const response = await fetch(`${HUXLEY_BASE_URL}/departures/${crsCode}/20?expand=true`)
+  const cacheKey = `nr-departures-${crsCode}`
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch National Rail departures: ${response.status}`)
-  }
+  return withCache(cacheKey, async () => {
+    const response = await fetchWithRetry(`${DARWIN_BASE_URL}/departures/${crsCode}`)
 
-  const data: NationalRailDeparturesResponse = await response.json()
-  const services = data.trainServices || []
+    if (!response.ok) {
+      throw new Error(`Failed to fetch National Rail departures: ${response.status}`)
+    }
 
-  // Normalize to common format
-  return services
-    .filter((service) => !service.isCancelled)
-    .map((service) => {
-      const destination = service.destination?.[0]?.locationName || 'Unknown'
-      const std = service.std // Scheduled time
-      const etd = service.etd // Estimated time ("On time", "Delayed", or time)
+    const data: NationalRailDeparturesResponse = await response.json()
+    const services = data.trainServices || []
 
-      // Calculate time to station
-      let departureSeconds: number
-      if (etd === 'On time' || etd === 'Delayed') {
-        departureSeconds = timeToSeconds(std)
-      } else if (etd && /^\d{2}:\d{2}$/.test(etd)) {
-        departureSeconds = timeToSeconds(etd)
-      } else {
-        departureSeconds = timeToSeconds(std)
-      }
+    // Normalize to common format
+    return services
+      .filter((service) => !service.isCancelled)
+      .map((service) => {
+        const destination = service.destination?.[0]?.locationName || 'Unknown'
+        const std = service.std // Scheduled time
+        const etd = service.etd // Estimated time ("On time", "Delayed", or time)
 
-      // Get all calling points for intermediate station filtering
-      const callingPoints = extractCallingPoints(service)
+        // Calculate time to station
+        let departureSeconds: number
+        if (etd === 'On time' || etd === 'Delayed') {
+          departureSeconds = timeToSeconds(std)
+        } else if (etd && /^\d{2}:\d{2}$/.test(etd)) {
+          departureSeconds = timeToSeconds(etd)
+        } else {
+          departureSeconds = timeToSeconds(std)
+        }
 
-      return {
-        id: service.serviceID,
-        expectedDeparture: Date.now() + departureSeconds * 1000,
-        destinationName: destination,
-        callingPoints,
-        lineName: service.operator || '',
-        lineId: service.operatorCode?.toLowerCase() || '',
-        modeName: 'national-rail',
-        platformName: service.platform,
-        status: etd === 'Delayed' ? ('Delayed' as const) : null,
-        operator: service.operator || null,
-        source: 'national-rail' as const,
-      }
-    })
-    .sort((a, b) => a.expectedDeparture - b.expectedDeparture)
+        // Get all calling points for intermediate station filtering
+        const callingPoints = extractCallingPoints(service)
+
+        return {
+          id: service.serviceID,
+          expectedDeparture: Date.now() + departureSeconds * 1000,
+          destinationName: destination,
+          callingPoints,
+          lineName: service.operator || '',
+          lineId: service.operatorCode?.toLowerCase() || '',
+          modeName: 'national-rail',
+          platformName: service.platform,
+          status: etd === 'Delayed' ? ('Delayed' as const) : null,
+          operator: service.operator || null,
+          source: 'national-rail' as const,
+        }
+      })
+      .sort((a, b) => a.expectedDeparture - b.expectedDeparture)
+  })
 }
 
 /**
  * Search National Rail stations via Huxley 2
+ * (Station search always uses Huxley 2 as it doesn't require auth)
  */
 export async function searchNationalRailStations(query: string): Promise<StationSearchResult[]> {
-  const response = await fetch(`${HUXLEY_BASE_URL}/crs/${encodeURIComponent(query)}`)
+  const response = await fetchWithRetry(`${HUXLEY_BASE_URL}/crs/${encodeURIComponent(query)}`)
 
   if (!response.ok) {
     // Huxley returns 404 for no matches
