@@ -9,3 +9,7 @@
 [[edge_functions]]
   path = "/api/darwin/*"
   function = "darwin"
+
+[[edge_functions]]
+  path = "/api/tfl/*"
+  function = "tfl"

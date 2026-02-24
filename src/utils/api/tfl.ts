@@ -6,25 +6,14 @@ import type { Arrival, StationSearchResult, TflArrival, TflStopPoint, TflSearchR
 import { fetchWithRetry } from './retry'
 import { withCache } from './cache'
 
-const TFL_BASE_URL = 'https://api.tfl.gov.uk'
-const TFL_API_KEY = import.meta.env.VITE_TFL_API_KEY as string | undefined
+// Edge function proxies to TfL API and adds the API key server-side
+const TFL_BASE_URL = '/api/tfl'
 
 // TfL API modes that support real-time arrivals
 const TFL_MODES = ['tube', 'dlr', 'overground', 'elizabeth-line']
 
 // Cache for hub station -> child station IDs mapping
 const hubChildrenCache = new Map<string, string[]>()
-
-/**
- * Build URL with API key from environment
- */
-function buildUrl(path: string): string {
-  const url = new URL(`${TFL_BASE_URL}${path}`)
-  if (TFL_API_KEY) {
-    url.searchParams.set('app_key', TFL_API_KEY)
-  }
-  return url.toString()
-}
 
 /**
  * Find child stop IDs for rail modes from a hub station
@@ -63,8 +52,7 @@ async function getHubChildren(stationId: string): Promise<string[]> {
     return cached
   }
 
-  const url = buildUrl(`/StopPoint/${stationId}`)
-  const response = await fetchWithRetry(url)
+  const response = await fetchWithRetry(`${TFL_BASE_URL}/StopPoint/${stationId}`)
 
   if (!response.ok) {
     return []
@@ -88,7 +76,7 @@ export async function fetchTflArrivals(stationId: string): Promise<Arrival[]> {
   const cacheKey = `tfl-arrivals-${stationId}`
 
   return withCache(cacheKey, async () => {
-    const url = buildUrl(`/StopPoint/${stationId}/Arrivals`)
+    const url = `${TFL_BASE_URL}/StopPoint/${stationId}/Arrivals`
     const response = await fetchWithRetry(url)
 
     if (!response.ok) {
@@ -105,7 +93,7 @@ export async function fetchTflArrivals(stationId: string): Promise<Arrival[]> {
         const childArrivals = await Promise.all(
           childIds.map(async (childId) => {
             try {
-              const childUrl = buildUrl(`/StopPoint/${childId}/Arrivals`)
+              const childUrl = `${TFL_BASE_URL}/StopPoint/${childId}/Arrivals`
               const childResponse = await fetchWithRetry(childUrl)
               if (childResponse.ok) {
                 return childResponse.json() as Promise<TflArrival[]>
@@ -153,8 +141,9 @@ export async function fetchTflArrivals(stationId: string): Promise<Arrival[]> {
  * Search TfL stations
  */
 export async function searchTflStations(query: string): Promise<StationSearchResult[]> {
-  const url = buildUrl(`/StopPoint/Search?query=${encodeURIComponent(query)}&modes=tube,dlr,overground,elizabeth-line`)
-  const response = await fetchWithRetry(url)
+  const response = await fetchWithRetry(
+    `${TFL_BASE_URL}/StopPoint/Search?query=${encodeURIComponent(query)}&modes=tube,dlr,overground,elizabeth-line`
+  )
 
   if (!response.ok) {
     throw new Error(`Failed to search stations: ${response.status}`)
