@@ -42,7 +42,7 @@ export function StationCard({ station, departures, error, loading, showPlatform 
 
       {/* Departures List */}
       <Stack gap={0}>
-        {error && (
+        {error && !hasDepartures && (
           <Text c="red" ta="center" py="xl" px="md">
             Unable to load departures
           </Text>

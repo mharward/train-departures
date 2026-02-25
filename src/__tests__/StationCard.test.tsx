@@ -58,9 +58,18 @@ describe('StationCard', () => {
     expect(screen.queryByText('No upcoming departures')).not.toBeInTheDocument()
   })
 
-  it('shows error message when error is set', () => {
+  it('shows error message when error is set and no departures', () => {
     renderCard({ error: 'API error' })
     expect(screen.getByText('Unable to load departures')).toBeInTheDocument()
+  })
+
+  it('shows stale departures instead of error when both exist', () => {
+    renderCard({
+      error: 'Network error',
+      departures: [makeDeparture({ id: '1', destinationName: 'Cambridge' })],
+    })
+    expect(screen.queryByText('Unable to load departures')).not.toBeInTheDocument()
+    expect(screen.getByText('Cambridge')).toBeInTheDocument()
   })
 
   it('shows empty state for empty departures array', () => {

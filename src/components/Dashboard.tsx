@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { AppShell, Group, Title, Text, Button, ActionIcon, SimpleGrid, Stack, Center } from '@mantine/core'
 import { StationCard } from './StationCard'
+import { NetworkBanner } from './NetworkBanner'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import type { Station, DeparturesMap, ErrorsMap } from '../types'
 
 interface DashboardProps {
@@ -28,6 +30,8 @@ export function Dashboard({
   onRefresh,
   onOpenSettings,
 }: DashboardProps) {
+  const online = useOnlineStatus()
+  const hasErrors = Object.values(errors).some((e) => e !== null)
   const [elapsed, setElapsed] = useState(0)
 
   // Update elapsed time every second
@@ -140,6 +144,7 @@ export function Dashboard({
       </AppShell.Header>
 
       <AppShell.Main>
+        <NetworkBanner online={online} hasErrors={hasErrors} loading={loading} onRetry={onRefresh} />
         {stations.length === 0 ? (
           <Center h="50vh">
             <Stack align="center" gap="md">
