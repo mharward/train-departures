@@ -1,0 +1,136 @@
+/* Smooth theme transitions */
+*,
+*::before,
+*::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Card entrance animation */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mantine-Card-root {
+  animation: card-enter 0.4s ease both;
+}
+
+/* Pulsing refresh indicator */
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.updating-pulse {
+  animation: pulse-text 1.5s ease-in-out infinite;
+}
+
+/* Card hover lift */
+.mantine-Card-root {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mantine-Card-root:hover {
+  transform: translateY(-2px);
+  box-shadow: light-dark(
+    0 4px 16px rgba(0, 0, 0, 0.14),
+    0 4px 16px rgba(0, 0, 0, 0.35)
+  );
+}
+
+/* Glass-style overrides for Mantine default-variant controls */
+
+/* Buttons & ActionIcons */
+.mantine-Button-root[data-variant='default'],
+.mantine-ActionIcon-root[data-variant='default'] {
+  background-color: light-dark(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.06));
+  border-color: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.1));
+}
+
+.mantine-Button-root[data-variant='default']:hover,
+.mantine-ActionIcon-root[data-variant='default']:hover {
+  background-color: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.1));
+}
+
+/* Text inputs, number inputs, selects */
+.mantine-Input-input {
+  background-color: light-dark(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.06));
+  border-color: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.1));
+}
+
+/* Checkboxes */
+.mantine-Checkbox-input:not(:checked) {
+  background-color: light-dark(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.06));
+  border-color: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.12));
+}
+
+/* AppShell header border */
+.mantine-AppShell-header {
+  --app-shell-border-color: light-dark(rgba(0, 0, 0, 0.08), transparent);
+}
+
+/* Modal overlay */
+.mantine-Modal-overlay {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Select / Popover dropdown */
+.mantine-Popover-dropdown,
+.mantine-Combobox-dropdown {
+  background-color: light-dark(rgba(255, 255, 255, 0.92), rgba(30, 30, 40, 0.92));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.08));
+}
+
+.mantine-Combobox-option:hover,
+.mantine-Combobox-option[data-combobox-selected] {
+  background-color: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.08));
+}
+
+/* Departure row hover & active */
+.departure-row {
+  transition: background-color 0.15s ease;
+}
+
+.departure-row:hover {
+  background-color: light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.04));
+}
+
+.departure-row:active {
+  background-color: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07));
+}
+
+/* Dividers */
+.mantine-Divider-root {
+  --_divider-color: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.06));
+}
+
+/* Dark mode scrollbars */
+[data-mantine-color-scheme='dark'] {
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+[data-mantine-color-scheme='dark'] ::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-mantine-color-scheme='dark'] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-mantine-color-scheme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+[data-mantine-color-scheme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}

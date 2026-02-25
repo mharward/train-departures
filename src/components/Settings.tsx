@@ -65,8 +65,18 @@ export function Settings({
       size="lg"
       styles={{
         body: { padding: 'var(--mantine-spacing-md)' },
-        header: { backgroundColor: 'var(--mantine-color-default)' },
-        content: { backgroundColor: 'var(--mantine-color-body)' },
+        header: {
+          backgroundColor: 'light-dark(rgba(255, 255, 255, 0.85), rgba(30, 30, 40, 0.8))',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: 'light-dark(1px solid rgba(0, 0, 0, 0.08), 1px solid rgba(255, 255, 255, 0.06))',
+        },
+        content: {
+          background: 'light-dark(rgba(245, 245, 250, 0.95), rgba(22, 22, 32, 0.95))',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: 'light-dark(1px solid rgba(0, 0, 0, 0.1), 1px solid rgba(255, 255, 255, 0.08))',
+        },
       }}
     >
       <Stack gap="lg">
@@ -95,8 +105,9 @@ export function Settings({
                       wrap="nowrap"
                       p="sm"
                       style={{
-                        backgroundColor: 'var(--mantine-color-default)',
-                        borderRadius: 'var(--mantine-radius-sm)',
+                        backgroundColor: 'light-dark(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.04))',
+                        borderRadius: 'var(--mantine-radius-md)',
+                        border: 'light-dark(1px solid rgba(0, 0, 0, 0.08), 1px solid rgba(255, 255, 255, 0.06))',
                       }}
                     >
                       <TransportIcon type={station.type} size={24} />

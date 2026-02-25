@@ -11,21 +11,33 @@ interface StationCardProps {
   loading: boolean
   showPlatform: boolean
   maxDepartures: number
+  index?: number
 }
 
-export function StationCard({ station, departures, error, loading, showPlatform, maxDepartures }: StationCardProps) {
+export function StationCard({ station, departures, error, loading, showPlatform, maxDepartures, index = 0 }: StationCardProps) {
   const hasDepartures = departures && departures.length > 0
   const isInitialLoad = loading && departures === undefined
   const filterSummary = getFilterSummary(station)
 
   return (
-    <Card padding={0} radius="md" withBorder>
+    <Card
+      padding={0}
+      radius="lg"
+      style={{
+        animationDelay: `${index * 0.08}s`,
+        background: 'light-dark(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.05))',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: 'light-dark(1px solid rgba(0, 0, 0, 0.12), 1px solid rgba(255, 255, 255, 0.08))',
+        boxShadow: 'light-dark(0 2px 12px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.2))',
+      }}
+    >
       {/* Header */}
       <Card.Section
         p="sm"
         style={{
-          backgroundColor: 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7))',
-          borderBottom: '1px solid var(--mantine-color-default-border)',
+          backgroundColor: 'light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.03))',
+          borderBottom: 'light-dark(1px solid rgba(0, 0, 0, 0.1), 1px solid rgba(255, 255, 255, 0.06))',
         }}
       >
         <Group gap="xs" wrap="nowrap">

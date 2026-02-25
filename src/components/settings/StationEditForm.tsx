@@ -42,8 +42,9 @@ export function StationEditForm({ station, onSave, onCancel }: StationEditFormPr
       onSubmit={handleSubmit}
       p="md"
       style={{
-        backgroundColor: 'var(--mantine-color-default)',
-        borderRadius: 'var(--mantine-radius-sm)',
+        backgroundColor: 'light-dark(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.04))',
+        borderRadius: 'var(--mantine-radius-md)',
+        border: 'light-dark(1px solid rgba(0, 0, 0, 0.08), 1px solid rgba(255, 255, 255, 0.06))',
       }}
     >
       <Stack gap="md">

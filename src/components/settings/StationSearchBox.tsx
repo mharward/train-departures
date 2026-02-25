@@ -64,8 +64,8 @@ export function StationSearchBox({ onAddStation, isStationAdded }: StationSearch
         <Stack
           gap={0}
           style={{
-            border: '1px solid var(--mantine-color-default-border)',
-            borderRadius: 'var(--mantine-radius-sm)',
+            border: 'light-dark(1px solid rgba(0, 0, 0, 0.1), 1px solid rgba(255, 255, 255, 0.06))',
+            borderRadius: 'var(--mantine-radius-md)',
             maxHeight: 300,
             overflowY: 'auto',
           }}
@@ -76,7 +76,7 @@ export function StationSearchBox({ onAddStation, isStationAdded }: StationSearch
               gap="sm"
               p="sm"
               wrap="nowrap"
-              style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}
+              style={{ borderBottom: 'light-dark(1px solid rgba(0, 0, 0, 0.06), 1px solid rgba(255, 255, 255, 0.04))' }}
             >
               <TransportIcon type={station.type} size={24} />
               <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>

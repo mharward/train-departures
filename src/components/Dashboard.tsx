@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AppShell, Group, Title, Text, Button, ActionIcon, SimpleGrid, Stack, Center } from '@mantine/core'
+import { AppShell, Group, Title, Text, Button, ActionIcon, SimpleGrid, Stack, Center, useComputedColorScheme } from '@mantine/core'
 import { StationCard } from './StationCard'
 import { NetworkBanner } from './NetworkBanner'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
@@ -32,6 +32,8 @@ export function Dashboard({
   onRefresh,
   onOpenSettings,
 }: DashboardProps) {
+  const colorScheme = useComputedColorScheme()
+  const dark = colorScheme === 'dark'
   const online = useOnlineStatus()
   const hasErrors = Object.values(errors).some((e) => e !== null)
   const [elapsed, setElapsed] = useState(0)
@@ -67,12 +69,16 @@ export function Dashboard({
       padding="md"
       styles={{
         main: {
-          backgroundColor: 'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-9))',
+          background: dark
+            ? 'linear-gradient(165deg, #0f0f1a 0%, #1a1025 35%, #0f1a1a 100%)'
+            : 'linear-gradient(165deg, #e0e8f5 0%, #e8e0f5 35%, #e0f5e8 100%)',
           minHeight: '100vh',
         },
         header: {
-          backgroundColor: 'light-dark(var(--mantine-color-white), var(--mantine-color-dark-7))',
-          borderBottom: '1px solid var(--mantine-color-default-border)',
+          backgroundColor: 'light-dark(rgba(255, 255, 255, 0.7), rgba(26, 27, 30, 0.7))',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: 'light-dark(1px solid rgba(0, 0, 0, 0.08), none)',
         },
       }}
     >
@@ -91,6 +97,7 @@ export function Dashboard({
               <Text
                 size="xs"
                 c="dimmed"
+                className={loading ? 'updating-pulse' : undefined}
                 style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
               >
                 {loading ? 'Updating...' : (
@@ -156,10 +163,11 @@ export function Dashboard({
           </Center>
         ) : (
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-            {stations.map((station) => (
+            {stations.map((station, index) => (
               <StationCard
                 key={station.id}
                 station={station}
+                index={index}
                 departures={departures[station.id]}
                 error={errors[station.id]}
                 loading={loading}

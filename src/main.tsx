@@ -6,6 +6,7 @@ import App from './App'
 
 // Mantine CSS
 import '@mantine/core/styles.css'
+import './glass.css'
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {

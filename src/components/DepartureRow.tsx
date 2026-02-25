@@ -22,9 +22,11 @@ export function DepartureRow({ departure, showPlatform }: DepartureRowProps) {
       py="xs"
       px="md"
       wrap="nowrap"
+      className="departure-row"
       style={{
-        borderBottom: '1px solid var(--mantine-color-default-border)',
-        backgroundColor: isDue ? 'rgba(34, 197, 94, 0.1)' : undefined,
+        borderBottom: 'light-dark(1px solid rgba(0, 0, 0, 0.1), 1px solid rgba(255, 255, 255, 0.06))',
+        backgroundColor: isDue ? 'rgba(34, 197, 94, 0.08)' : undefined,
+        borderLeft: isDue ? '3px solid rgba(34, 197, 94, 0.6)' : '3px solid transparent',
       }}
     >
       {/* Time */}
