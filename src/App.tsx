@@ -9,7 +9,8 @@ import { filterVisibleStations } from './utils/schedule'
 function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [currentTime, setCurrentTime] = useState(() => new Date())
-  const { config, addStation, updateStation, removeStation, updateSettings } = useConfig()
+  const { config, addStation, updateStation, removeStation, reorderStations, updateSettings } =
+    useConfig()
   const { setColorScheme } = useMantineColorScheme()
 
   // Update current time every minute for schedule filtering
@@ -87,6 +88,7 @@ function App() {
           onAddStation={addStation}
           onUpdateStation={updateStation}
           onRemoveStation={removeStation}
+          onReorderStations={reorderStations}
           onUpdateSettings={updateSettings}
           onClose={() => setShowSettings(false)}
         />

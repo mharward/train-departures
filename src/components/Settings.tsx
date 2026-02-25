@@ -9,6 +9,7 @@ import {
   Group,
   Text,
   Title,
+  ActionIcon,
   Button,
   Checkbox,
   NumberInput,
@@ -25,6 +26,7 @@ interface SettingsProps {
   onAddStation: (station: StationSearchResult) => void
   onUpdateStation: (stationId: string, updates: Partial<Station>) => void
   onRemoveStation: (stationId: string) => void
+  onReorderStations: (fromIndex: number, toIndex: number) => void
   onUpdateSettings: (updates: Partial<AppConfig>) => void
   onClose: () => void
 }
@@ -34,6 +36,7 @@ export function Settings({
   onAddStation,
   onUpdateStation,
   onRemoveStation,
+  onReorderStations,
   onUpdateSettings,
   onClose,
 }: SettingsProps) {
@@ -78,7 +81,7 @@ export function Settings({
             <Text c="dimmed">No stations configured. Search above to add one.</Text>
           ) : (
             <Stack gap="sm">
-              {config.stations.map((station) => (
+              {config.stations.map((station, index) => (
                 <div key={station.id}>
                   {editingStation === station.id ? (
                     <StationEditForm
@@ -113,6 +116,28 @@ export function Settings({
                         )}
                       </Stack>
                       <Group gap="xs">
+                        {config.stations.length > 1 && !editingStation && (
+                          <>
+                            <ActionIcon
+                              variant="default"
+                              size="sm"
+                              aria-label={`Move ${station.name} up`}
+                              disabled={index === 0}
+                              onClick={() => onReorderStations(index, index - 1)}
+                            >
+                              ▲
+                            </ActionIcon>
+                            <ActionIcon
+                              variant="default"
+                              size="sm"
+                              aria-label={`Move ${station.name} down`}
+                              disabled={index === config.stations.length - 1}
+                              onClick={() => onReorderStations(index, index + 1)}
+                            >
+                              ▼
+                            </ActionIcon>
+                          </>
+                        )}
                         <Button
                           variant="default"
                           size="xs"
