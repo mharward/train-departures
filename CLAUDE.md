@@ -10,6 +10,7 @@ npm run build    # Production build to dist/
 npm run lint     # Run ESLint
 npm run format   # Format code with Prettier
 npm run preview  # Preview production build
+npm run icons    # Regenerate PWA icon PNGs from public/logo.svg
 ```
 
 `npm run dev` uses `netlify dev`, which runs Vite and serves the Darwin edge function
