@@ -17,8 +17,8 @@ export default defineConfig({
         name: 'Next Train - Live Departures',
         short_name: 'Next Train',
         description: 'Real-time UK train and tube departure times',
-        theme_color: '#1a1b1e',
-        background_color: '#1a1b1e',
+        theme_color: '#0f0f1a',
+        background_color: '#0f0f1a',
         display: 'standalone',
         icons: [
           {
