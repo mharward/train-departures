@@ -58,7 +58,7 @@ export function Settings({
     <Modal
       opened={true}
       onClose={onClose}
-      title={<Title order={3}>Settings</Title>}
+      title={<Text fw={700} size="lg">Settings</Text>}
       size="lg"
       styles={{
         body: { padding: 'var(--mantine-spacing-md)' },

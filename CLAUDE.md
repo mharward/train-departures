@@ -15,6 +15,8 @@ npm run preview  # Preview production build
 `npm run dev` uses `netlify dev`, which runs Vite and serves the Darwin edge function
 locally at `http://localhost:8888`. Requires `DARWIN_ACCESS_TOKEN` in `.env`.
 
+**Important:** Delete `dist/` before running `npm run dev`. Netlify Dev serves files from `dist/` (the `publish` directory) instead of proxying to Vite when it exists, which breaks the dev server. Also kill any stale node processes holding Vite's port (5173) — if Vite starts on a different port, Netlify Dev can't proxy to it.
+
 ## Architecture
 
 This is a React + Vite frontend app that displays real-time train departures from UK rail services. No backend - it calls public APIs directly from the browser.

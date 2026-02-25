@@ -43,15 +43,16 @@ function App() {
     }
   }, [config.theme, setColorScheme])
 
-  // Also apply theme to document for legacy CSS variables
+  // Also apply theme to document for legacy CSS variables and PWA theme-color
   useEffect(() => {
     const applyTheme = (theme: string) => {
-      if (theme === 'system') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
-      } else {
-        document.documentElement.setAttribute('data-theme', theme)
-      }
+      const isDark =
+        theme === 'system'
+          ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          : theme === 'dark'
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
+      const themeColor = isDark ? '#1a1b1e' : '#ffffff'
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor)
     }
 
     applyTheme(config.theme)
