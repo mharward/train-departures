@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Card, Group, Text, Stack, Center, Loader } from '@mantine/core'
 import { DepartureRow } from './DepartureRow'
 import { TransportIcon } from './TransportIcon'
@@ -15,6 +16,7 @@ interface StationCardProps {
 }
 
 export function StationCard({ station, departures, error, loading, showPlatform, maxDepartures, index = 0 }: StationCardProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const hasDepartures = departures && departures.length > 0
   const isInitialLoad = loading && departures === undefined
   const filterSummary = getFilterSummary(station)
@@ -81,6 +83,12 @@ export function StationCard({ station, departures, error, loading, showPlatform,
                 key={departure.id || `${departure.destinationName}-${index}`}
                 departure={departure}
                 showPlatform={showPlatform}
+                destinations={station.destinations}
+                expanded={expandedId === (departure.id || `${departure.destinationName}-${index}`)}
+                onToggle={() => {
+                  const id = departure.id || `${departure.destinationName}-${index}`
+                  setExpandedId((prev) => (prev === id ? null : id))
+                }}
               />
             ))}
       </Stack>

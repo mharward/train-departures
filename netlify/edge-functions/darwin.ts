@@ -29,7 +29,7 @@ interface Service {
   operatorCode?: string
   isCancelled?: boolean
   destination: { locationName: string; crs: string }[]
-  subsequentCallingPoints?: { callingPointList: CallingPointList }
+  subsequentCallingPoints?: CallingPointList[]
 }
 
 interface DeparturesResponse {
@@ -129,9 +129,7 @@ function parseSoapResponse(xmlText: string): DeparturesResponse {
       operatorCode: getTagText(svc, 'lt4:operatorCode'),
       isCancelled,
       destination: parseDestinations(svc),
-      subsequentCallingPoints: {
-        callingPointList: callingPointLists[0] || { callingPoint: [] },
-      },
+      subsequentCallingPoints: callingPointLists,
     }
   })
 
@@ -154,15 +152,11 @@ function transformToHuxleyFormat(data: DeparturesResponse) {
       operatorCode: svc.operatorCode,
       isCancelled: svc.isCancelled,
       destination: svc.destination.map((d) => ({ locationName: d.locationName })),
-      subsequentCallingPoints: svc.subsequentCallingPoints?.callingPointList
-        ? [
-            {
-              callingPoint: svc.subsequentCallingPoints.callingPointList.callingPoint.map((cp) => ({
-                locationName: cp.locationName,
-              })),
-            },
-          ]
-        : [],
+      subsequentCallingPoints: (svc.subsequentCallingPoints || []).map((list) => ({
+        callingPoint: list.callingPoint.map((cp) => ({
+          locationName: cp.locationName,
+        })),
+      })),
     })),
   }
 }

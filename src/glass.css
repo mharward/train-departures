@@ -108,6 +108,52 @@
   background-color: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07));
 }
 
+/* Route details panel */
+.route-details {
+  background-color: light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.03));
+  border-bottom: light-dark(1px solid rgba(0, 0, 0, 0.1), 1px solid rgba(255, 255, 255, 0.06));
+}
+
+.calling-points-list {
+  position: relative;
+  padding-left: 4px;
+}
+
+/* Single continuous vertical line behind all dots */
+.calling-points-list::before {
+  content: '';
+  position: absolute;
+  left: 7px; /* padding-left(4) + half dot(3) */
+  top: 12px;  /* vertically center with first dot */
+  bottom: 12px; /* vertically center with last dot */
+  width: 1px;
+  background-color: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15));
+}
+
+.calling-point {
+  padding: 3px 0;
+  position: relative;
+}
+
+.calling-point-dot {
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  border-radius: 50%;
+  background-color: light-dark(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.25));
+  position: relative;
+  z-index: 1;
+}
+
+.calling-point-dot.matched {
+  background-color: light-dark(var(--mantine-color-blue-5), var(--mantine-color-blue-4));
+  box-shadow: 0 0 4px light-dark(rgba(59, 130, 246, 0.4), rgba(96, 165, 250, 0.4));
+}
+
+.calling-point-dot.final {
+  background-color: light-dark(rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.5));
+}
+
 /* Dividers */
 .mantine-Divider-root {
   --_divider-color: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.06));
