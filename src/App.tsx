@@ -78,6 +78,7 @@ function App() {
         countdown={countdown}
         autoRefresh={config.autoRefresh}
         showPlatform={config.showPlatform}
+        maxDepartures={config.maxDepartures}
         onRefresh={refresh}
         onOpenSettings={() => setShowSettings(true)}
       />

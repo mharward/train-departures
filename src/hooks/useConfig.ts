@@ -8,6 +8,7 @@ const defaultConfig: AppConfig = {
   autoRefresh: false,
   refreshInterval: 60,
   showPlatform: true,
+  maxDepartures: 8,
   theme: 'system',
 }
 

@@ -196,6 +196,20 @@ export function Settings({
             onChange={(e) => onUpdateSettings({ showPlatform: e.currentTarget.checked })}
           />
 
+          <NumberInput
+            label="Max departures per station"
+            min={1}
+            max={12}
+            value={config.maxDepartures}
+            onChange={(value) =>
+              onUpdateSettings({
+                maxDepartures: typeof value === 'number' ? value : 8,
+              })
+            }
+            size="sm"
+            style={{ maxWidth: 200 }}
+          />
+
           <Select
             label="Theme"
             value={config.theme}

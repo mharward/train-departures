@@ -79,6 +79,7 @@ export interface AppConfig {
   autoRefresh: boolean
   refreshInterval: number
   showPlatform: boolean
+  maxDepartures: number
   theme: 'system' | 'dark' | 'light'
 }
 

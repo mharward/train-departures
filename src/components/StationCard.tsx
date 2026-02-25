@@ -10,9 +10,10 @@ interface StationCardProps {
   error: string | null | undefined
   loading: boolean
   showPlatform: boolean
+  maxDepartures: number
 }
 
-export function StationCard({ station, departures, error, loading, showPlatform }: StationCardProps) {
+export function StationCard({ station, departures, error, loading, showPlatform, maxDepartures }: StationCardProps) {
   const hasDepartures = departures && departures.length > 0
   const isInitialLoad = loading && departures === undefined
   const filterSummary = getFilterSummary(station)
@@ -62,7 +63,7 @@ export function StationCard({ station, departures, error, loading, showPlatform 
 
         {hasDepartures &&
           departures
-            .slice(0, 8)
+            .slice(0, maxDepartures)
             .map((departure, index) => (
               <DepartureRow
                 key={departure.id || `${departure.destinationName}-${index}`}

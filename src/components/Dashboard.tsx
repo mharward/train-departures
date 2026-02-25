@@ -14,6 +14,7 @@ interface DashboardProps {
   countdown: number
   autoRefresh: boolean
   showPlatform: boolean
+  maxDepartures: number
   onRefresh: () => void
   onOpenSettings: () => void
 }
@@ -27,6 +28,7 @@ export function Dashboard({
   countdown,
   autoRefresh,
   showPlatform,
+  maxDepartures,
   onRefresh,
   onOpenSettings,
 }: DashboardProps) {
@@ -162,6 +164,7 @@ export function Dashboard({
                 error={errors[station.id]}
                 loading={loading}
                 showPlatform={showPlatform}
+                maxDepartures={maxDepartures}
               />
             ))}
           </SimpleGrid>

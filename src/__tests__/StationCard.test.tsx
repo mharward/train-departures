@@ -32,6 +32,7 @@ function renderCard(props: {
   departures?: FilteredArrival[]
   error?: string | null
   loading?: boolean
+  maxDepartures?: number
 }) {
   return render(
     <MantineProvider>
@@ -41,6 +42,7 @@ function renderCard(props: {
         error={props.error ?? null}
         loading={props.loading ?? false}
         showPlatform={false}
+        maxDepartures={props.maxDepartures ?? 8}
       />
     </MantineProvider>,
   )
@@ -88,15 +90,28 @@ describe('StationCard', () => {
     expect(screen.getByText('Peterborough')).toBeInTheDocument()
   })
 
-  it('caps at 8 departure rows', () => {
+  it('caps at 8 departure rows by default', () => {
     const departures = Array.from({ length: 12 }, (_, i) =>
       makeDeparture({ id: String(i), destinationName: `Dest ${i}` }),
     )
-    renderCard({ departures })
+    renderCard({ departures, maxDepartures: 8 })
     for (let i = 0; i < 8; i++) {
       expect(screen.getByText(`Dest ${i}`)).toBeInTheDocument()
     }
     for (let i = 8; i < 12; i++) {
+      expect(screen.queryByText(`Dest ${i}`)).not.toBeInTheDocument()
+    }
+  })
+
+  it('respects custom maxDepartures value', () => {
+    const departures = Array.from({ length: 8 }, (_, i) =>
+      makeDeparture({ id: String(i), destinationName: `Dest ${i}` }),
+    )
+    renderCard({ departures, maxDepartures: 5 })
+    for (let i = 0; i < 5; i++) {
+      expect(screen.getByText(`Dest ${i}`)).toBeInTheDocument()
+    }
+    for (let i = 5; i < 8; i++) {
       expect(screen.queryByText(`Dest ${i}`)).not.toBeInTheDocument()
     }
   })
