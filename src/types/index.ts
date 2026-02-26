@@ -101,6 +101,9 @@ export type ErrorsMap = Record<string, string | null>
 export interface TflArrival {
   vehicleId?: string
   id: string
+  naptanId?: string
+  direction?: string
+  destinationNaptanId?: string
   timeToStation: number
   destinationName?: string
   towards?: string

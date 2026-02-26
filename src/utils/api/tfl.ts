@@ -5,6 +5,7 @@
 import type { Arrival, StationSearchResult, TflArrival, TflStopPoint, TflSearchResponse } from '../../types'
 import { fetchWithRetry } from './retry'
 import { withCache } from './cache'
+import { fetchRouteSequence, getCallingPoints, type ParsedRouteData } from './tflRoutes'
 
 // Edge function proxies to TfL API and adds the API key server-side
 const TFL_BASE_URL = '/api/tfl'
@@ -108,20 +109,106 @@ export async function fetchTflArrivals(stationId: string): Promise<Arrival[]> {
       }
     }
 
+    // Filter out arrivals with no destination info — these are incomplete predictions
+    // (e.g. Circle line at Paddington Bakerloo stop returns entries with no destinationName
+    // or destinationNaptanId, just a platform name like "Inner Rail")
+    data = data.filter((arrival) => arrival.destinationName || arrival.destinationNaptanId)
+
+    // Fetch route sequences for computing calling points.
+    // For arrivals without direction (e.g. Circle line at terminus), fetch both directions.
+    const routeKeys = new Set<string>()
+    for (const arrival of data) {
+      if (arrival.lineId) {
+        if (arrival.direction) {
+          routeKeys.add(`${arrival.lineId}|${arrival.direction}`)
+        } else {
+          routeKeys.add(`${arrival.lineId}|outbound`)
+          routeKeys.add(`${arrival.lineId}|inbound`)
+        }
+      }
+    }
+
+    const routeMap = new Map<string, ParsedRouteData | null>()
+    const routeEntries = await Promise.all(
+      Array.from(routeKeys).map(async (key) => {
+        const [lineId, direction] = key.split('|')
+        const seq = await fetchRouteSequence(lineId, direction)
+        return [key, seq] as const
+      })
+    )
+    for (const [key, seq] of routeEntries) {
+      routeMap.set(key, seq)
+    }
+
+    /**
+     * Try to compute calling points using a given route dataset,
+     * first with the arrival's naptanId, then falling back to the configured stationId.
+     */
+    function tryCallingPoints(
+      arrival: TflArrival,
+      routeData: ParsedRouteData
+    ): string[] | undefined {
+      let result = getCallingPoints(
+        arrival.naptanId || stationId,
+        arrival.destinationNaptanId!,
+        routeData
+      )
+      if (!result && arrival.naptanId && arrival.naptanId !== stationId) {
+        result = getCallingPoints(stationId, arrival.destinationNaptanId!, routeData)
+      }
+      return result
+    }
+
     // Normalize to common format, deduplicate, and sort
     const now = Date.now()
-    const normalized = data.map((arrival) => ({
-      id: arrival.vehicleId || arrival.id,
-      expectedDeparture: now + arrival.timeToStation * 1000,
-      destinationName: arrival.destinationName || arrival.towards || '',
-      lineName: arrival.lineName,
-      lineId: arrival.lineId,
-      modeName: arrival.modeName,
-      platformName: arrival.platformName,
-      status: null,
-      operator: null,
-      source: 'tfl' as const,
-    }))
+    const normalized = data
+      .map((arrival) => {
+        let callingPoints: string[] | undefined
+        if (arrival.destinationNaptanId && arrival.lineId) {
+          if (arrival.direction) {
+            // Known direction — use that route
+            const routeData = routeMap.get(`${arrival.lineId}|${arrival.direction}`)
+            if (routeData) {
+              callingPoints = tryCallingPoints(arrival, routeData)
+            }
+          } else {
+            // No direction (e.g. Circle line at terminus) — try both
+            for (const dir of ['outbound', 'inbound']) {
+              const routeData = routeMap.get(`${arrival.lineId}|${dir}`)
+              if (routeData) {
+                callingPoints = tryCallingPoints(arrival, routeData)
+                if (callingPoints) break
+              }
+            }
+          }
+        }
+
+        // Filter out trains terminating at this station with no onward journey.
+        // Destination === origin is valid on circular routes (e.g. Circle line) where
+        // there are intermediate calling points, but not for terminus arrivals (e.g. DLR at Bank).
+        if (
+          arrival.destinationNaptanId &&
+          arrival.destinationNaptanId === arrival.naptanId &&
+          (!callingPoints || callingPoints.length === 0)
+        ) {
+          return null
+        }
+
+        return {
+          id: arrival.vehicleId || arrival.id,
+          expectedDeparture: now + arrival.timeToStation * 1000,
+          destinationName: arrival.destinationName || arrival.towards || '',
+          callingPoints,
+          lineName: arrival.lineName,
+          lineId: arrival.lineId,
+          modeName: arrival.modeName,
+          platformName: arrival.platformName,
+          status: null,
+          operator: null,
+          source: 'tfl' as const,
+        }
+      })
+      .filter((a): a is NonNullable<typeof a> => a !== null)
 
     // Deduplicate by ID (same train can appear from multiple child stops)
     const seen = new Set<string>()
