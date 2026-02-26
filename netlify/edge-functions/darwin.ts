@@ -57,9 +57,20 @@ function buildSoapRequest(token: string, crs: string): string {
 
 // --- Regex-based XML helpers (DOMParser is not available in Deno) ---
 
+function decodeXmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+}
+
 function getTagText(xml: string, tagName: string): string | undefined {
   const match = xml.match(new RegExp(`<${tagName}[^>]*>([^<]*)</${tagName}>`))
-  return match?.[1] || undefined
+  return match?.[1] ? decodeXmlEntities(match[1]) : undefined
 }
 
 function getTagBlocks(xml: string, tagName: string): string[] {
