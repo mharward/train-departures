@@ -28,9 +28,17 @@ export function timeToSeconds(timeStr: string | null | undefined): number {
  * Format seconds to human-readable minutes
  */
 export function formatMinutes(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
-  if (minutes <= 0) {
+  const totalMinutes = Math.floor(seconds / 60)
+  if (totalMinutes <= 0) {
     return 'Due'
   }
-  return `${minutes} min`
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`
+  }
+  const hours = Math.floor(totalMinutes / 60)
+  const mins = totalMinutes % 60
+  if (mins === 0) {
+    return `${hours}h`
+  }
+  return `${hours}h ${mins}m`
 }

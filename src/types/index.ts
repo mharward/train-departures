@@ -53,12 +53,19 @@ export interface StationSearchResult {
   crs?: string
 }
 
+// Calling point with optional timing data (National Rail only)
+export interface CallingPoint {
+  name: string
+  st?: string // Scheduled time
+  et?: string // Estimated time ("On time", "Delayed", or HH:MM)
+}
+
 // Arrival/departure from API
 export interface Arrival {
   id: string
   expectedDeparture: number // Unix timestamp
   destinationName: string
-  callingPoints?: string[]
+  callingPoints?: CallingPoint[]
   lineName: string
   lineId: string
   modeName: string
@@ -133,6 +140,8 @@ export interface TflSearchResponse {
 // National Rail (Huxley) API response types
 export interface NationalRailCallingPoint {
   locationName?: string
+  st?: string
+  et?: string
 }
 
 export interface NationalRailCallingPointGroup {

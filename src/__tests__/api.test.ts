@@ -84,6 +84,15 @@ describe('formatMinutes', () => {
     expect(formatMinutes(119)).toBe('1 min')
     expect(formatMinutes(150)).toBe('2 min')
   })
+
+  it('formats hours and minutes for 60+ minutes', () => {
+    expect(formatMinutes(3600)).toBe('1h')
+    expect(formatMinutes(3660)).toBe('1h 1m')
+    expect(formatMinutes(5400)).toBe('1h 30m')
+    expect(formatMinutes(7200)).toBe('2h')
+    expect(formatMinutes(7260)).toBe('2h 1m')
+    expect(formatMinutes(9000)).toBe('2h 30m')
+  })
 })
 
 describe('extractCallingPoints', () => {
@@ -101,14 +110,18 @@ describe('extractCallingPoints', () => {
       subsequentCallingPoints: [
         {
           callingPoint: [
-            { locationName: 'Station A' },
-            { locationName: 'Station B' },
-            { locationName: 'Station C' },
+            { locationName: 'Station A', st: '10:10', et: 'On time' },
+            { locationName: 'Station B', st: '10:20', et: '10:22' },
+            { locationName: 'Station C', st: '10:30', et: 'Delayed' },
           ],
         },
       ],
     }
-    expect(extractCallingPoints(service)).toEqual(['Station A', 'Station B', 'Station C'])
+    expect(extractCallingPoints(service)).toEqual([
+      { name: 'Station A', st: '10:10', et: 'On time' },
+      { name: 'Station B', st: '10:20', et: '10:22' },
+      { name: 'Station C', st: '10:30', et: 'Delayed' },
+    ])
   })
 
   it('extracts calling points from multiple groups', () => {
@@ -126,10 +139,10 @@ describe('extractCallingPoints', () => {
       ],
     }
     expect(extractCallingPoints(service)).toEqual([
-      'Station A',
-      'Station B',
-      'Station C',
-      'Station D',
+      { name: 'Station A', st: undefined, et: undefined },
+      { name: 'Station B', st: undefined, et: undefined },
+      { name: 'Station C', st: undefined, et: undefined },
+      { name: 'Station D', st: undefined, et: undefined },
     ])
   })
 
@@ -144,7 +157,7 @@ describe('extractCallingPoints', () => {
         },
       ],
     }
-    expect(extractCallingPoints(service)).toEqual(['Station A'])
+    expect(extractCallingPoints(service)).toEqual([{ name: 'Station A', st: undefined, et: undefined }])
   })
 
   it('handles missing callingPoint array in group', () => {
@@ -154,7 +167,7 @@ describe('extractCallingPoints', () => {
       etd: 'On time',
       subsequentCallingPoints: [{ callingPoint: undefined }, { callingPoint: [{ locationName: 'Station A' }] }],
     }
-    expect(extractCallingPoints(service)).toEqual(['Station A'])
+    expect(extractCallingPoints(service)).toEqual([{ name: 'Station A', st: undefined, et: undefined }])
   })
 })
 
@@ -356,12 +369,12 @@ describe('filterArrivals', () => {
         createArrival({
           id: 'match',
           destinationName: 'Brighton',
-          callingPoints: ['Gatwick Airport', 'Three Bridges', 'Haywards Heath'],
+          callingPoints: [{ name: 'Gatwick Airport' }, { name: 'Three Bridges' }, { name: 'Haywards Heath' }],
         }),
         createArrival({
           id: 'no-match',
           destinationName: 'Brighton',
-          callingPoints: ['Croydon', 'Redhill'],
+          callingPoints: [{ name: 'Croydon' }, { name: 'Redhill' }],
         }),
       ]
       const result = filterArrivals(arrivals, {
@@ -411,7 +424,7 @@ describe('filterArrivals', () => {
         createArrival({
           id: 'match',
           destinationName: 'Brighton',
-          callingPoints: ['Gatwick Airport'],
+          callingPoints: [{ name: 'Gatwick Airport' }],
         }),
       ]
       const result = filterArrivals(arrivals, { destinationFilter: 'gatwick' })
@@ -445,5 +458,53 @@ describe('filterArrivals', () => {
     ]
     // Should not throw
     expect(() => filterArrivals(arrivals, { destinationFilter: 'test' })).not.toThrow()
+  })
+})
+
+// Import buildRouteDisplay from DepartureRow (exported for testing)
+describe('buildRouteDisplay', async () => {
+  const { buildRouteDisplay } = await import('../components/DepartureRow')
+
+  const cp = (name: string): { name: string } => ({ name })
+
+  it('returns all stops individually when fewer than 3 uninteresting consecutive stops', () => {
+    const points = [cp('A'), cp('B'), cp('C')]
+    const result = buildRouteDisplay(points, [])
+    // First and last are always interesting, B is a run of 1 — not collapsed
+    expect(result).toHaveLength(3)
+    expect(result.every((r) => r.type === 'stop')).toBe(true)
+  })
+
+  it('collapses runs of 3+ uninteresting stops', () => {
+    const points = [cp('First'), cp('A'), cp('B'), cp('C'), cp('Last')]
+    const result = buildRouteDisplay(points, [])
+    // First stop, collapsed group (A, B, C), Last stop
+    expect(result).toHaveLength(3)
+    expect(result[0].type).toBe('stop')
+    expect(result[1].type).toBe('collapsed')
+    if (result[1].type === 'collapsed') {
+      expect(result[1].count).toBe(3)
+    }
+    expect(result[2].type).toBe('stop')
+  })
+
+  it('does not collapse when run is only 2 stops', () => {
+    const points = [cp('First'), cp('A'), cp('B'), cp('Last')]
+    const result = buildRouteDisplay(points, [])
+    expect(result).toHaveLength(4)
+    expect(result.every((r) => r.type === 'stop')).toBe(true)
+  })
+
+  it('keeps destination-matched stops visible', () => {
+    const points = [cp('First'), cp('A'), cp('B'), cp('Match'), cp('C'), cp('D'), cp('Last')]
+    const destinations = [{ id: '1', name: 'Match', crs: null }]
+    const result = buildRouteDisplay(points, destinations)
+    // First, collapsed(A, B), Match, collapsed would only be 2 (C, D) so not collapsed, Last
+    const stopNames = result
+      .filter((r) => r.type === 'stop')
+      .map((r) => (r as { type: 'stop'; point: { name: string } }).point.name)
+    expect(stopNames).toContain('Match')
+    expect(stopNames).toContain('First')
+    expect(stopNames).toContain('Last')
   })
 })

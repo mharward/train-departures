@@ -1,10 +1,104 @@
+import { useState } from 'react'
 import { Group, Stack, Text, Badge, Box, Collapse } from '@mantine/core'
 import { LineIndicator } from './LineIndicator'
-import { formatMinutes } from '../utils/api'
-import type { FilteredArrival, Destination } from '../types'
+import { formatMinutes, timeToSeconds } from '../utils/api'
+import type { FilteredArrival, Destination, CallingPoint } from '../types'
 
 function formatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+/**
+ * Get the display time for a calling point.
+ * - et is a time like "10:45" → show that
+ * - et is "On time" → show st
+ * - et is "Delayed" → show st with delayed indicator
+ * - No timing → undefined
+ */
+function getCallingPointTime(point: CallingPoint): { time: string; delayed: boolean } | undefined {
+  if (!point.st && !point.et) return undefined
+
+  if (point.et && /^\d{2}:\d{2}$/.test(point.et)) {
+    return { time: point.et, delayed: false }
+  }
+
+  if (point.et === 'On time' && point.st) {
+    return { time: point.st, delayed: false }
+  }
+
+  if (point.et === 'Delayed' && point.st) {
+    return { time: point.st, delayed: true }
+  }
+
+  if (point.st) {
+    return { time: point.st, delayed: false }
+  }
+
+  return undefined
+}
+
+type RouteDisplayItem =
+  | { type: 'stop'; point: CallingPoint; isFirst: boolean; isLast: boolean; isMatch: boolean }
+  | { type: 'collapsed'; count: number; points: CallingPoint[]; index: number }
+
+/**
+ * Build the route display, collapsing runs of 3+ uninteresting intermediate stops.
+ * "Interesting" = first stop (index 0), last stop, or destination-filter-matched stop.
+ */
+export function buildRouteDisplay(
+  callingPoints: CallingPoint[],
+  destinations: Destination[]
+): RouteDisplayItem[] {
+  const isInteresting = (point: CallingPoint, index: number): boolean => {
+    if (index === 0) return true
+    if (index === callingPoints.length - 1) return true
+    if (destinations.length === 0) return false
+
+    const pointLower = point.name.toLowerCase()
+    return destinations.some((dest) => {
+      const destName = dest.name.toLowerCase()
+      const destCrs = dest.crs?.toLowerCase()
+      return pointLower.includes(destName) || (destCrs && pointLower.includes(destCrs))
+    })
+  }
+
+  const items: RouteDisplayItem[] = []
+  let i = 0
+
+  while (i < callingPoints.length) {
+    const point = callingPoints[i]
+    const isLast = i === callingPoints.length - 1
+    const interesting = isInteresting(point, i)
+
+    if (interesting) {
+      items.push({
+        type: 'stop',
+        point,
+        isFirst: i === 0,
+        isLast,
+        isMatch: !isLast && i !== 0 && interesting,
+      })
+      i++
+    } else {
+      // Collect consecutive uninteresting stops
+      const runStart = i
+      while (i < callingPoints.length && !isInteresting(callingPoints[i], i)) {
+        i++
+      }
+      const runLength = i - runStart
+      const runPoints = callingPoints.slice(runStart, i)
+
+      if (runLength >= 3) {
+        items.push({ type: 'collapsed', count: runLength, points: runPoints, index: runStart })
+      } else {
+        for (const p of runPoints) {
+          items.push({ type: 'stop', point: p, isFirst: false, isLast: false, isMatch: false })
+        }
+      }
+    }
+  }
+
+  return items
 }
 
 /**
@@ -31,9 +125,9 @@ function findViaMatch(
 
     // Check calling points for a match
     for (const point of callingPoints) {
-      const pointLower = point.toLowerCase()
+      const pointLower = point.name.toLowerCase()
       if (pointLower.includes(destName) || (destCrs && pointLower.includes(destCrs))) {
-        return point
+        return point.name
       }
     }
   }
@@ -45,15 +139,41 @@ interface DepartureRowProps {
   departure: FilteredArrival
   showPlatform: boolean
   destinations?: Destination[]
+  stationName?: string
   expanded?: boolean
   onToggle?: () => void
 }
 
-export function DepartureRow({ departure, showPlatform, destinations, expanded, onToggle }: DepartureRowProps) {
+export function DepartureRow({ departure, showPlatform, destinations, stationName, expanded, onToggle }: DepartureRowProps) {
   const minutes = formatMinutes(departure.timeToStation)
   const isDue = minutes === 'Due'
   const viaStop = destinations?.length ? findViaMatch(departure, destinations) : null
   const hasCallingPoints = departure.callingPoints && departure.callingPoints.length > 0
+  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(() => new Set())
+
+  const toggleGroup = (index: number) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) {
+        next.delete(index)
+      } else {
+        next.add(index)
+      }
+      return next
+    })
+  }
+
+  const fullRoute = hasCallingPoints
+    ? [
+        ...(stationName
+          ? [{ name: stationName, st: formatTime(departure.expectedDeparture), et: 'On time' }]
+          : []),
+        ...departure.callingPoints!,
+      ]
+    : []
+  const routeItems = fullRoute.length > 0
+    ? buildRouteDisplay(fullRoute, destinations || [])
+    : []
 
   return (
     <Box>
@@ -136,22 +256,74 @@ export function DepartureRow({ departure, showPlatform, destinations, expanded, 
         <Box className="route-details" py="sm" pr="md" style={{ paddingLeft: 89 + 16 }}>
           {hasCallingPoints ? (
             <Stack gap={0} className="calling-points-list">
-              {departure.callingPoints!.map((point, i) => {
-                const isLast = i === departure.callingPoints!.length - 1
-                const isMatch = destinations?.some((dest) => {
-                  const destName = dest.name.toLowerCase()
-                  const destCrs = dest.crs?.toLowerCase()
-                  const pointLower = point.toLowerCase()
-                  return pointLower.includes(destName) || (destCrs && pointLower.includes(destCrs))
-                })
-                const dotClass = `calling-point-dot${isMatch ? ' matched' : isLast ? ' final' : ''}`
+              {routeItems.map((item, idx) => {
+                if (item.type === 'stop') {
+                  const timing = getCallingPointTime(item.point)
+                  const isEndpoint = item.isFirst || item.isLast
+                  const dotClass = `calling-point-dot${item.isMatch ? ' matched' : isEndpoint ? ' final' : ''}`
+                  const MAX_DURATION = 20 * 3600 // 20 hours — beyond this it's a wraparound artifact
+                  const durationSecs = item.isFirst
+                    ? departure.timeToStation
+                    : timing ? timeToSeconds(timing.time) : null
+                  const duration = durationSecs !== null && durationSecs > 0 && durationSecs < MAX_DURATION ? formatMinutes(durationSecs) : null
+                  return (
+                    <Group key={`${item.point.name}-${idx}`} gap="xs" wrap="nowrap" className="calling-point">
+                      <Box className={dotClass} />
+                      <Text size="xs" c={item.isMatch || isEndpoint ? undefined : 'dimmed'} fw={item.isMatch || isEndpoint ? 500 : undefined}>
+                        {item.point.name}
+                      </Text>
+                      {timing && (
+                        <Text size="xs" c={timing.delayed ? 'yellow' : 'dimmed'} className="calling-point-time">
+                          {timing.time}{timing.delayed ? ' *' : ''}
+                        </Text>
+                      )}
+                      <Text size="xs" c="dimmed" className="calling-point-duration">
+                        {duration || ''}
+                      </Text>
+                    </Group>
+                  )
+                }
+
+                // Collapsed group
+                const isGroupExpanded = expandedGroups.has(item.index)
                 return (
-                  <Group key={`${point}-${i}`} gap="xs" wrap="nowrap" className="calling-point">
-                    <Box className={dotClass} />
-                    <Text size="xs" c={isMatch || isLast ? undefined : 'dimmed'} fw={isMatch || isLast ? 500 : undefined}>
-                      {point}
-                    </Text>
-                  </Group>
+                  <Box key={`collapsed-${item.index}`} className={isGroupExpanded ? 'calling-point-group expanded' : 'calling-point-group'}>
+                    <Group
+                      gap="xs"
+                      wrap="nowrap"
+                      className="calling-point calling-point-collapsed"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        toggleGroup(item.index)
+                      }}
+                    >
+                      <Text size="xs" c="dimmed">
+                        ⋮ {item.count} stops {isGroupExpanded ? '▴' : '▾'}
+                      </Text>
+                    </Group>
+                    {isGroupExpanded && item.points.map((point, pi) => {
+                      const timing = getCallingPointTime(point)
+                      const MAX_DURATION = 20 * 3600
+                      const durationSecs = timing ? timeToSeconds(timing.time) : null
+                      const duration = durationSecs !== null && durationSecs > 0 && durationSecs < MAX_DURATION ? formatMinutes(durationSecs) : null
+                      return (
+                        <Group key={`${point.name}-${item.index}-${pi}`} gap="xs" wrap="nowrap" className="calling-point">
+                          <Box className="calling-point-dot" />
+                          <Text size="xs" c="dimmed">
+                            {point.name}
+                          </Text>
+                          {timing && (
+                            <Text size="xs" c={timing.delayed ? 'yellow' : 'dimmed'} className="calling-point-time">
+                              {timing.time}{timing.delayed ? ' *' : ''}
+                            </Text>
+                          )}
+                          <Text size="xs" c="dimmed" className="calling-point-duration">
+                            {duration || ''}
+                          </Text>
+                        </Group>
+                      )
+                    })}
+                  </Box>
                 )
               })}
             </Stack>

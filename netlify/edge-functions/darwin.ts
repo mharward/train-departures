@@ -166,6 +166,8 @@ function transformToHuxleyFormat(data: DeparturesResponse) {
       subsequentCallingPoints: (svc.subsequentCallingPoints || []).map((list) => ({
         callingPoint: list.callingPoint.map((cp) => ({
           locationName: cp.locationName,
+          st: cp.st || undefined,
+          et: cp.et || undefined,
         })),
       })),
     })),

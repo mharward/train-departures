@@ -2,7 +2,7 @@
  * TfL API integration for Tube, DLR, Overground, and Elizabeth Line
  */
 
-import type { Arrival, StationSearchResult, TflArrival, TflStopPoint, TflSearchResponse } from '../../types'
+import type { Arrival, CallingPoint, StationSearchResult, TflArrival, TflStopPoint, TflSearchResponse } from '../../types'
 import { fetchWithRetry } from './retry'
 import { withCache } from './cache'
 import { fetchRouteSequence, getCallingPoints, type ParsedRouteData } from './tflRoutes'
@@ -147,7 +147,7 @@ export async function fetchTflArrivals(stationId: string): Promise<Arrival[]> {
     function tryCallingPoints(
       arrival: TflArrival,
       routeData: ParsedRouteData
-    ): string[] | undefined {
+    ): CallingPoint[] | undefined {
       let result = getCallingPoints(
         arrival.naptanId || stationId,
         arrival.destinationNaptanId!,
@@ -156,14 +156,14 @@ export async function fetchTflArrivals(stationId: string): Promise<Arrival[]> {
       if (!result && arrival.naptanId && arrival.naptanId !== stationId) {
         result = getCallingPoints(stationId, arrival.destinationNaptanId!, routeData)
       }
-      return result
+      return result?.map((name) => ({ name }))
     }
 
     // Normalize to common format, deduplicate, and sort
     const now = Date.now()
     const normalized = data
       .map((arrival) => {
-        let callingPoints: string[] | undefined
+        let callingPoints: CallingPoint[] | undefined
         if (arrival.destinationNaptanId && arrival.lineId) {
           if (arrival.direction) {
             // Known direction — use that route

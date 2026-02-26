@@ -4,6 +4,7 @@
 
 import type {
   Arrival,
+  CallingPoint,
   StationSearchResult,
   NationalRailService,
   NationalRailDeparturesResponse,
@@ -20,15 +21,19 @@ const HUXLEY_BASE_URL = 'https://huxley2.azurewebsites.net'
 /**
  * Extract calling points from a National Rail service
  */
-export function extractCallingPoints(service: NationalRailService): string[] {
-  const points: string[] = []
+export function extractCallingPoints(service: NationalRailService): CallingPoint[] {
+  const points: CallingPoint[] = []
   const callingPointsList = service.subsequentCallingPoints || []
 
   for (const group of callingPointsList) {
     const callingPoints = group.callingPoint || []
     for (const point of callingPoints) {
       if (point.locationName) {
-        points.push(point.locationName)
+        points.push({
+          name: point.locationName,
+          st: point.st,
+          et: point.et,
+        })
       }
     }
   }

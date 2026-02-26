@@ -117,6 +117,7 @@
 .calling-points-list {
   position: relative;
   padding-left: 4px;
+  max-width: 280px;
 }
 
 /* Single continuous vertical line behind all dots */
@@ -133,6 +134,40 @@
 .calling-point {
   padding: 3px 0;
   position: relative;
+  justify-content: flex-start;
+}
+
+.calling-point-time {
+  margin-left: auto;
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.calling-point-duration {
+  min-width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.calling-point-collapsed {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 3px 4px;
+  padding-left: 11px; /* align with station names: dot(7) + gap(4) */
+  margin: 0 -4px;
+}
+
+.calling-point-collapsed:hover {
+  background-color: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
+}
+
+.calling-point-group.expanded {
+  border-left: 2px dotted light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.12));
+  margin-left: -6px;
+  padding-left: 4px; /* 6px margin - 2px border = 4px padding to keep dots aligned */
 }
 
 .calling-point-dot {

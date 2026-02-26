@@ -84,6 +84,7 @@ export function StationCard({ station, departures, error, loading, showPlatform,
                 departure={departure}
                 showPlatform={showPlatform}
                 destinations={station.destinations}
+                stationName={station.name}
                 expanded={expandedId === (departure.id || `${departure.destinationName}-${index}`)}
                 onToggle={() => {
                   const id = departure.id || `${departure.destinationName}-${index}`

@@ -52,8 +52,8 @@ export function filterArrivals(
           const callingPoints = arrival.callingPoints || []
           return callingPoints.some(
             (point) =>
-              point.toLowerCase().includes(destName) ||
-              (destCrs && point.toLowerCase().includes(destCrs))
+              point.name.toLowerCase().includes(destName) ||
+              (destCrs && point.name.toLowerCase().includes(destCrs))
           )
         })
 
@@ -70,7 +70,7 @@ export function filterArrivals(
         // Check calling points (intermediate stations)
         const callingPoints = arrival.callingPoints || []
         const matchesCallingPoint = callingPoints.some((point) =>
-          point.toLowerCase().includes(filter)
+          point.name.toLowerCase().includes(filter)
         )
 
         if (!matchesDestination && !matchesCallingPoint) {
