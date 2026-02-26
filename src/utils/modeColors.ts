@@ -46,6 +46,7 @@ export const lineColors: Record<string, string> = {
   es: '#F7941D', // Eurostar (limited)
   hx: '#532E63', // Heathrow Express
   ln: '#231F20', // Lumo
+  xr: '#6950A1', // Elizabeth Line (same as TfL)
 
   // Fallback
   default: '#666666',
