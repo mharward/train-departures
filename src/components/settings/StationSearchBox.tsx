@@ -11,10 +11,9 @@ import type { StationSearchResult } from '../../types'
 
 interface StationSearchBoxProps {
   onAddStation: (station: StationSearchResult) => void
-  isStationAdded: (stationId: string) => boolean
 }
 
-export function StationSearchBox({ onAddStation, isStationAdded }: StationSearchBoxProps) {
+export function StationSearchBox({ onAddStation }: StationSearchBoxProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<StationSearchResult[]>([])
   const [searching, setSearching] = useState(false)
@@ -90,9 +89,8 @@ export function StationSearchBox({ onAddStation, isStationAdded }: StationSearch
               <Button
                 size="xs"
                 onClick={() => handleAddStation(station)}
-                disabled={isStationAdded(station.id)}
               >
-                {isStationAdded(station.id) ? 'Added' : 'Add'}
+                Add
               </Button>
             </Group>
           ))}

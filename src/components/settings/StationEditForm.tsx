@@ -77,7 +77,7 @@ export function StationEditForm({ station, onSave, onCancel }: StationEditFormPr
         </Stack>
 
         <SchedulePicker
-          stationId={station.id}
+          stationId={station.instanceId}
           enabled={scheduleEnabled}
           startTime={startTime}
           endTime={endTime}

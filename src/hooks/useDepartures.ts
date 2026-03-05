@@ -36,8 +36,8 @@ export function useDepartures(
     stationsRef.current = stations
   }, [stations])
 
-  // Stable string of station IDs to detect actual station changes
-  const stationIds = stations.map((s) => s.id).join(',')
+  // Stable string of station instance IDs to detect actual station changes
+  const stationKey = stations.map((s) => s.instanceId).join(',')
 
   // Re-filter raw arrivals to update timeToStation and remove departed trains
   const updateDepartures = useCallback(() => {
@@ -46,9 +46,9 @@ export function useDepartures(
 
     const newDepartures: DeparturesMap = {}
     for (const station of currentStations) {
-      const raw = rawArrivalsRef.current[station.id]
+      const raw = rawArrivalsRef.current[station.instanceId]
       if (raw) {
-        newDepartures[station.id] = filterArrivals(raw, {
+        newDepartures[station.instanceId] = filterArrivals(raw, {
           minMinutes: station.minMinutes || 0,
           maxMinutes: station.maxMinutes || 60,
           destinationFilter: station.destinationFilter || '',
@@ -76,14 +76,14 @@ export function useDepartures(
       currentStations.map(async (station) => {
         try {
           const arrivals = await fetchArrivals(station)
-          newRawArrivals[station.id] = arrivals
-          newErrors[station.id] = null
+          newRawArrivals[station.instanceId] = arrivals
+          newErrors[station.instanceId] = null
         } catch (error) {
           console.error(`Error fetching departures for ${station.name}:`, error)
-          newErrors[station.id] = error instanceof Error ? error.message : 'Unknown error'
+          newErrors[station.instanceId] = error instanceof Error ? error.message : 'Unknown error'
           // Keep old raw data if available
-          if (rawArrivalsRef.current[station.id]) {
-            newRawArrivals[station.id] = rawArrivalsRef.current[station.id]
+          if (rawArrivalsRef.current[station.instanceId]) {
+            newRawArrivals[station.instanceId] = rawArrivalsRef.current[station.instanceId]
           }
         }
       })
@@ -119,7 +119,7 @@ export function useDepartures(
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stationIds, autoRefresh, refreshInterval])
+  }, [stationKey, autoRefresh, refreshInterval])
 
   // Tick every second to update countdowns and filter departed trains
   useEffect(() => {

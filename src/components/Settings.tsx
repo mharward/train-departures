@@ -43,18 +43,11 @@ export function Settings({
   const [editingStation, setEditingStation] = useState<string | null>(null)
 
   const handleSaveEdit = useCallback(
-    (stationId: string, updates: Partial<Station>) => {
-      onUpdateStation(stationId, updates)
+    (instanceId: string, updates: Partial<Station>) => {
+      onUpdateStation(instanceId, updates)
       setEditingStation(null)
     },
     [onUpdateStation]
-  )
-
-  const isStationAdded = useCallback(
-    (stationId: string): boolean => {
-      return config.stations.some((s) => s.id === stationId)
-    },
-    [config.stations]
   )
 
   return (
@@ -80,7 +73,7 @@ export function Settings({
       }}
     >
       <Stack gap="lg">
-        <StationSearchBox onAddStation={onAddStation} isStationAdded={isStationAdded} />
+        <StationSearchBox onAddStation={onAddStation} />
 
         <Divider />
 
@@ -92,11 +85,11 @@ export function Settings({
           ) : (
             <Stack gap="sm">
               {config.stations.map((station, index) => (
-                <div key={station.id}>
-                  {editingStation === station.id ? (
+                <div key={station.instanceId}>
+                  {editingStation === station.instanceId ? (
                     <StationEditForm
                       station={station}
-                      onSave={(updates) => handleSaveEdit(station.id, updates)}
+                      onSave={(updates) => handleSaveEdit(station.instanceId, updates)}
                       onCancel={() => setEditingStation(null)}
                     />
                   ) : (
@@ -152,7 +145,7 @@ export function Settings({
                         <Button
                           variant="default"
                           size="xs"
-                          onClick={() => setEditingStation(station.id)}
+                          onClick={() => setEditingStation(station.instanceId)}
                         >
                           Edit
                         </Button>
@@ -160,7 +153,7 @@ export function Settings({
                           variant="default"
                           size="xs"
                           color="red"
-                          onClick={() => onRemoveStation(station.id)}
+                          onClick={() => onRemoveStation(station.instanceId)}
                         >
                           Remove
                         </Button>

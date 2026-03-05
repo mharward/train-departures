@@ -165,11 +165,11 @@ export function Dashboard({
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
             {stations.map((station, index) => (
               <StationCard
-                key={station.id}
+                key={station.instanceId}
                 station={station}
                 index={index}
-                departures={departures[station.id]}
-                error={errors[station.id]}
+                departures={departures[station.instanceId]}
+                error={errors[station.instanceId]}
                 loading={loading}
                 showPlatform={showPlatform}
                 maxDepartures={maxDepartures}

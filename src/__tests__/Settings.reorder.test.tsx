@@ -5,6 +5,7 @@ import type { AppConfig, Station } from '../types'
 
 function makeStation(overrides: Partial<Station> = {}): Station {
   return {
+    instanceId: crypto.randomUUID(),
     id: 'station-1',
     name: 'Kings Cross',
     type: 'national-rail',

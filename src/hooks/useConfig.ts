@@ -13,6 +13,7 @@ const defaultConfig: AppConfig = {
 }
 
 interface LegacyStation {
+  instanceId?: string
   id: string
   name: string
   type?: 'tfl' | 'national-rail'
@@ -46,6 +47,7 @@ export function migrateStation(station: LegacyStation): Station {
 
   // Ensure required fields have defaults
   const base = {
+    instanceId: migrated.instanceId || crypto.randomUUID(),
     id: migrated.id,
     name: migrated.name,
     minMinutes: migrated.minMinutes ?? 0,
@@ -108,8 +110,10 @@ export function useConfig(): UseConfigReturn {
   // Add a station
   const addStation = useCallback((station: LegacyStation) => {
     setConfig((prev) => {
+      const instanceId = crypto.randomUUID()
       const newStation: Station = station.type === 'national-rail'
         ? {
+            instanceId,
             id: station.id,
             name: station.name,
             type: 'national-rail',
@@ -121,6 +125,7 @@ export function useConfig(): UseConfigReturn {
             schedule: null,
           }
         : {
+            instanceId,
             id: station.id,
             name: station.name,
             type: 'tfl',
@@ -138,19 +143,19 @@ export function useConfig(): UseConfigReturn {
     })
   }, [])
 
-  // Update a station
-  const updateStation = useCallback((stationId: string, updates: Partial<Station>) => {
+  // Update a station by instanceId
+  const updateStation = useCallback((instanceId: string, updates: Partial<Station>) => {
     setConfig((prev) => ({
       ...prev,
-      stations: prev.stations.map((s) => (s.id === stationId ? { ...s, ...updates } : s)),
+      stations: prev.stations.map((s) => (s.instanceId === instanceId ? { ...s, ...updates } : s)),
     }))
   }, [])
 
-  // Remove a station
-  const removeStation = useCallback((stationId: string) => {
+  // Remove a station by instanceId
+  const removeStation = useCallback((instanceId: string) => {
     setConfig((prev) => ({
       ...prev,
-      stations: prev.stations.filter((s) => s.id !== stationId),
+      stations: prev.stations.filter((s) => s.instanceId !== instanceId),
     }))
   }, [])
 

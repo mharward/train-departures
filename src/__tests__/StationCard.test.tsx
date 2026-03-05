@@ -4,6 +4,7 @@ import { StationCard } from '../components/StationCard'
 import type { Station, FilteredArrival } from '../types'
 
 const station: Station = {
+  instanceId: 'test-instance',
   id: 'test-station',
   name: 'Kings Cross',
   type: 'national-rail',

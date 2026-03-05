@@ -196,8 +196,8 @@ describe('filterVisibleStations', () => {
   it('filters stations based on schedule', () => {
     const monday10am = new Date(2024, 0, 15, 10, 0, 0) // Monday
     const stations: Station[] = [
-      { id: 'visible', name: 'Visible', type: 'tfl', schedule, minMinutes: 0, maxMinutes: 60, destinations: [] },
-      { id: 'no-schedule', name: 'No Schedule', type: 'tfl', minMinutes: 0, maxMinutes: 60, destinations: [] },
+      { instanceId: 'i-visible', id: 'visible', name: 'Visible', type: 'tfl', schedule, minMinutes: 0, maxMinutes: 60, destinations: [] },
+      { instanceId: 'i-no-schedule', id: 'no-schedule', name: 'No Schedule', type: 'tfl', minMinutes: 0, maxMinutes: 60, destinations: [] },
     ]
     const result = filterVisibleStations(stations, monday10am)
     expect(result).toHaveLength(2)
@@ -206,7 +206,7 @@ describe('filterVisibleStations', () => {
   it('excludes stations outside schedule', () => {
     const sunday = new Date(2024, 0, 14, 10, 0, 0) // Sunday
     const stations: Station[] = [
-      { id: 'hidden', name: 'Hidden', type: 'tfl', schedule, minMinutes: 0, maxMinutes: 60, destinations: [] },
+      { instanceId: 'i-hidden', id: 'hidden', name: 'Hidden', type: 'tfl', schedule, minMinutes: 0, maxMinutes: 60, destinations: [] },
     ]
     const result = filterVisibleStations(stations, sunday)
     expect(result).toHaveLength(0)

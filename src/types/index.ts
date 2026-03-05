@@ -18,6 +18,7 @@ export interface Schedule {
 
 // Base station properties
 interface BaseStation {
+  instanceId: string // Unique per-instance ID (allows same station added multiple times)
   id: string
   name: string
   minMinutes: number
@@ -98,10 +99,10 @@ export interface FilterOptions {
   destinations?: Destination[] | null
 }
 
-// Departures state keyed by station ID
+// Departures state keyed by station instanceId
 export type DeparturesMap = Record<string, FilteredArrival[]>
 
-// Errors state keyed by station ID
+// Errors state keyed by station instanceId
 export type ErrorsMap = Record<string, string | null>
 
 // TfL API response types
