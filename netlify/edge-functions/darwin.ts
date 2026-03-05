@@ -2,6 +2,11 @@
  * Netlify Edge Function - Darwin SOAP API Proxy
  *
  * Proxies requests to the National Rail Darwin API, converting SOAP to JSON.
+ * Makes two parallel calls:
+ *   - GetDepartureBoard (up to 149 rows, no calling points)
+ *   - GetDepBoardWithDetails (up to 10 rows, with calling points)
+ * Then merges: all services from the board, enriched with calling points where available.
+ *
  * Environment variable required: DARWIN_ACCESS_TOKEN
  */
 
@@ -36,7 +41,34 @@ interface DeparturesResponse {
   trainServices: Service[] | null
 }
 
-function buildSoapRequest(token: string, crs: string): string {
+function buildDepartureBoardRequest(token: string, crs: string, filterCrs?: string): string {
+  const filterXml = filterCrs
+    ? `\n      <ldb:filterCrs>${filterCrs}</ldb:filterCrs>\n      <ldb:filterType>to</ldb:filterType>`
+    : ''
+
+  return `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
+               xmlns:typ="http://thalesgroup.com/RTTI/2013-11-28/Token/types"
+               xmlns:ldb="http://thalesgroup.com/RTTI/2017-10-01/ldb/">
+  <soap:Header>
+    <typ:AccessToken>
+      <typ:TokenValue>${token}</typ:TokenValue>
+    </typ:AccessToken>
+  </soap:Header>
+  <soap:Body>
+    <ldb:GetDepartureBoardRequest>
+      <ldb:numRows>149</ldb:numRows>
+      <ldb:crs>${crs}</ldb:crs>${filterXml}
+    </ldb:GetDepartureBoardRequest>
+  </soap:Body>
+</soap:Envelope>`
+}
+
+function buildDepBoardWithDetailsRequest(token: string, crs: string, filterCrs?: string): string {
+  const filterXml = filterCrs
+    ? `\n      <ldb:filterCrs>${filterCrs}</ldb:filterCrs>\n      <ldb:filterType>to</ldb:filterType>`
+    : ''
+
   return `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
                xmlns:typ="http://thalesgroup.com/RTTI/2013-11-28/Token/types"
@@ -48,8 +80,8 @@ function buildSoapRequest(token: string, crs: string): string {
   </soap:Header>
   <soap:Body>
     <ldb:GetDepBoardWithDetailsRequest>
-      <ldb:numRows>150</ldb:numRows>
-      <ldb:crs>${crs}</ldb:crs>
+      <ldb:numRows>10</ldb:numRows>
+      <ldb:crs>${crs}</ldb:crs>${filterXml}
     </ldb:GetDepBoardWithDetailsRequest>
   </soap:Body>
 </soap:Envelope>`
@@ -68,13 +100,18 @@ function decodeXmlEntities(text: string): string {
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
 }
 
-function getTagText(xml: string, tagName: string): string | undefined {
-  const match = xml.match(new RegExp(`<${tagName}[^>]*>([^<]*)</${tagName}>`))
+/** Match tag with any namespace prefix (e.g. lt4:, lt5:, lt7:) */
+function nsTag(localName: string): string {
+  return `\\w+:${localName}`
+}
+
+function getTagText(xml: string, tagPattern: string): string | undefined {
+  const match = xml.match(new RegExp(`<${tagPattern}[^>]*>([^<]*)</${tagPattern}>`))
   return match?.[1] ? decodeXmlEntities(match[1]) : undefined
 }
 
-function getTagBlocks(xml: string, tagName: string): string[] {
-  const regex = new RegExp(`<${tagName}[^>]*>[\\s\\S]*?</${tagName}>`, 'g')
+function getTagBlocks(xml: string, tagPattern: string): string[] {
+  const regex = new RegExp(`<${tagPattern}[^>]*>[\\s\\S]*?</${tagPattern}>`, 'g')
   const results: string[] = []
   let match
   while ((match = regex.exec(xml)) !== null) {
@@ -83,8 +120,8 @@ function getTagBlocks(xml: string, tagName: string): string[] {
   return results
 }
 
-function getFirstTagBlock(xml: string, tagName: string): string | undefined {
-  const match = xml.match(new RegExp(`<${tagName}[^>]*>[\\s\\S]*?</${tagName}>`))
+function getFirstTagBlock(xml: string, tagPattern: string): string | undefined {
+  const match = xml.match(new RegExp(`<${tagPattern}[^>]*>[\\s\\S]*?</${tagPattern}>`))
   return match?.[0]
 }
 
@@ -92,17 +129,17 @@ function getFirstTagBlock(xml: string, tagName: string): string | undefined {
 
 function parseCallingPoints(serviceXml: string): CallingPointList[] {
   const result: CallingPointList[] = []
-  const subsequentPoints = getFirstTagBlock(serviceXml, 'lt7:subsequentCallingPoints')
+  const subsequentPoints = getFirstTagBlock(serviceXml, nsTag('subsequentCallingPoints'))
   if (!subsequentPoints) return result
 
-  const callingPointLists = getTagBlocks(subsequentPoints, 'lt7:callingPointList')
+  const callingPointLists = getTagBlocks(subsequentPoints, nsTag('callingPointList'))
   for (const list of callingPointLists) {
-    const points = getTagBlocks(list, 'lt7:callingPoint')
+    const points = getTagBlocks(list, nsTag('callingPoint'))
     const callingPoints: CallingPoint[] = points.map((point) => ({
-      locationName: getTagText(point, 'lt7:locationName') || '',
-      crs: getTagText(point, 'lt7:crs') || '',
-      st: getTagText(point, 'lt7:st') || '',
-      et: getTagText(point, 'lt7:et') || '',
+      locationName: getTagText(point, nsTag('locationName')) || '',
+      crs: getTagText(point, nsTag('crs')) || '',
+      st: getTagText(point, nsTag('st')) || '',
+      et: getTagText(point, nsTag('et')) || '',
     }))
     result.push({ callingPoint: callingPoints })
   }
@@ -111,33 +148,33 @@ function parseCallingPoints(serviceXml: string): CallingPointList[] {
 }
 
 function parseDestinations(serviceXml: string): { locationName: string; crs: string }[] {
-  const destinationBlock = getFirstTagBlock(serviceXml, 'lt5:destination')
+  const destinationBlock = getFirstTagBlock(serviceXml, nsTag('destination'))
   if (!destinationBlock) return []
 
-  return getTagBlocks(destinationBlock, 'lt4:location').map((loc) => ({
-    locationName: getTagText(loc, 'lt4:locationName') || '',
-    crs: getTagText(loc, 'lt4:crs') || '',
+  return getTagBlocks(destinationBlock, nsTag('location')).map((loc) => ({
+    locationName: getTagText(loc, nsTag('locationName')) || '',
+    crs: getTagText(loc, nsTag('crs')) || '',
   }))
 }
 
 function parseSoapResponse(xmlText: string): DeparturesResponse {
-  const trainServicesBlock = getFirstTagBlock(xmlText, 'lt7:trainServices')
+  const trainServicesBlock = getFirstTagBlock(xmlText, nsTag('trainServices'))
   if (!trainServicesBlock) {
     return { trainServices: null }
   }
 
-  const serviceBlocks = getTagBlocks(trainServicesBlock, 'lt7:service')
+  const serviceBlocks = getTagBlocks(trainServicesBlock, nsTag('service'))
   const services: Service[] = serviceBlocks.map((svc) => {
-    const isCancelled = getTagText(svc, 'lt4:isCancelled') === 'true'
+    const isCancelled = getTagText(svc, nsTag('isCancelled')) === 'true'
     const callingPointLists = parseCallingPoints(svc)
 
     return {
-      serviceID: getTagText(svc, 'lt4:serviceID') || '',
-      std: getTagText(svc, 'lt4:std') || '',
-      etd: getTagText(svc, 'lt4:etd') || '',
-      platform: getTagText(svc, 'lt4:platform'),
-      operator: getTagText(svc, 'lt4:operator'),
-      operatorCode: getTagText(svc, 'lt4:operatorCode'),
+      serviceID: getTagText(svc, nsTag('serviceID')) || '',
+      std: getTagText(svc, nsTag('std')) || '',
+      etd: getTagText(svc, nsTag('etd')) || '',
+      platform: getTagText(svc, nsTag('platform')),
+      operator: getTagText(svc, nsTag('operator')),
+      operatorCode: getTagText(svc, nsTag('operatorCode')),
       isCancelled,
       destination: parseDestinations(svc),
       subsequentCallingPoints: callingPointLists,
@@ -174,6 +211,46 @@ function transformToHuxleyFormat(data: DeparturesResponse) {
   }
 }
 
+/**
+ * Merge two sets of services: take all from the board (many services),
+ * enrich with calling points from the detailed response (up to 10).
+ */
+function mergeServices(board: DeparturesResponse, details: DeparturesResponse): DeparturesResponse {
+  if (!board.trainServices) return details
+
+  const detailsMap = new Map<string, Service>()
+  if (details.trainServices) {
+    for (const svc of details.trainServices) {
+      detailsMap.set(svc.serviceID, svc)
+    }
+  }
+
+  return {
+    trainServices: board.trainServices.map((svc) => {
+      const detailed = detailsMap.get(svc.serviceID)
+      if (detailed?.subsequentCallingPoints?.length) {
+        return { ...svc, subsequentCallingPoints: detailed.subsequentCallingPoints }
+      }
+      return svc
+    }),
+  }
+}
+
+async function fetchDarwin(soapBody: string): Promise<string> {
+  const response = await fetch(DARWIN_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/soap+xml; charset=utf-8' },
+    body: soapBody,
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(`Darwin API error ${response.status}: ${text}`)
+  }
+
+  return response.text()
+}
+
 export default async function handler(request: Request): Promise<Response> {
   // Handle CORS preflight
   if (request.method === 'OPTIONS') {
@@ -199,6 +276,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const crs = match[1].toUpperCase()
+  const filterCrs = url.searchParams.get('filterCrs')?.toUpperCase() || undefined
   const accessToken = Deno.env.get('DARWIN_ACCESS_TOKEN')
 
   if (!accessToken) {
@@ -209,31 +287,16 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   try {
-    const soapRequest = buildSoapRequest(accessToken, crs)
+    // Make both calls in parallel: full board (149 rows) + details (10 rows)
+    const [boardXml, detailsXml] = await Promise.all([
+      fetchDarwin(buildDepartureBoardRequest(accessToken, crs, filterCrs)),
+      fetchDarwin(buildDepBoardWithDetailsRequest(accessToken, crs, filterCrs)),
+    ])
 
-    const response = await fetch(DARWIN_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/soap+xml; charset=utf-8',
-      },
-      body: soapRequest,
-    })
-
-    if (!response.ok) {
-      const text = await response.text()
-      console.error('Darwin API error:', response.status, text)
-      return new Response(JSON.stringify({ error: `Darwin API error: ${response.status}` }), {
-        status: response.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      })
-    }
-
-    const xmlText = await response.text()
-    const parsed = parseSoapResponse(xmlText)
-    const transformed = transformToHuxleyFormat(parsed)
+    const board = parseSoapResponse(boardXml)
+    const details = parseSoapResponse(detailsXml)
+    const merged = mergeServices(board, details)
+    const transformed = transformToHuxleyFormat(merged)
 
     return new Response(JSON.stringify(transformed), {
       status: 200,

@@ -42,13 +42,15 @@ export function extractCallingPoints(service: NationalRailService): CallingPoint
 }
 
 /**
- * Fetch National Rail departures via Darwin edge function
+ * Fetch National Rail departures via Darwin edge function.
+ * When filterCrs is provided, Darwin returns only services calling at that station.
  */
-export async function fetchNationalRailDepartures(crsCode: string): Promise<Arrival[]> {
-  const cacheKey = `nr-departures-${crsCode}`
+export async function fetchNationalRailDepartures(crsCode: string, filterCrs?: string): Promise<Arrival[]> {
+  const cacheKey = filterCrs ? `nr-departures-${crsCode}-${filterCrs}` : `nr-departures-${crsCode}`
 
   return withCache(cacheKey, async () => {
-    const response = await fetchWithRetry(`${DARWIN_BASE_URL}/departures/${crsCode}`)
+    const params = filterCrs ? `?filterCrs=${encodeURIComponent(filterCrs)}` : ''
+    const response = await fetchWithRetry(`${DARWIN_BASE_URL}/departures/${crsCode}${params}`)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch National Rail departures: ${response.status}`)

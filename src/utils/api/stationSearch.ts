@@ -25,11 +25,16 @@ export async function searchStations(query: string): Promise<StationSearchResult
 }
 
 /**
- * Unified fetch function - determines which API to use based on station type
+ * Unified fetch function - determines which API to use based on station type.
+ * For National Rail, passes filterCrs when the station has exactly one CRS-based
+ * destination, letting Darwin filter server-side for much better results.
  */
 export async function fetchArrivals(station: Station): Promise<Arrival[]> {
   if (station.type === 'national-rail') {
-    return fetchNationalRailDepartures(station.crs)
+    // Use filterCrs when there's exactly one CRS destination
+    const crsDestinations = (station.destinations || []).filter((d) => d.crs)
+    const filterCrs = crsDestinations.length === 1 ? crsDestinations[0].crs! : undefined
+    return fetchNationalRailDepartures(station.crs, filterCrs)
   }
   return fetchTflArrivals(station.id)
 }
