@@ -2,7 +2,7 @@
  * Settings panel - manages stations and app configuration
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   Modal,
   Stack,
@@ -41,6 +41,16 @@ export function Settings({
   onClose,
 }: SettingsProps) {
   const [editingStation, setEditingStation] = useState<string | null>(null)
+  const prevStationCountRef = useRef(config.stations.length)
+
+  useEffect(() => {
+    const prevCount = prevStationCountRef.current
+    prevStationCountRef.current = config.stations.length
+    if (config.stations.length > prevCount) {
+      const lastStation = config.stations[config.stations.length - 1]
+      setEditingStation(lastStation.instanceId)
+    }
+  }, [config.stations])
 
   const handleSaveEdit = useCallback(
     (instanceId: string, updates: Partial<Station>) => {
