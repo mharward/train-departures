@@ -26,15 +26,43 @@ export async function searchStations(query: string): Promise<StationSearchResult
 
 /**
  * Unified fetch function - determines which API to use based on station type.
- * For National Rail, passes filterCrs when the station has exactly one CRS-based
- * destination, letting Darwin filter server-side for much better results.
+ * For National Rail with CRS-based destinations, uses Darwin's filterCrs for
+ * server-side filtering. Multiple CRS destinations trigger parallel requests
+ * that are merged (OR logic).
  */
 export async function fetchArrivals(station: Station): Promise<Arrival[]> {
   if (station.type === 'national-rail') {
-    // Use filterCrs when there's exactly one CRS destination
     const crsDestinations = (station.destinations || []).filter((d) => d.crs)
-    const filterCrs = crsDestinations.length === 1 ? crsDestinations[0].crs! : undefined
-    return fetchNationalRailDepartures(station.crs, filterCrs)
+    const hasTextDestinations = (station.destinations || []).some((d) => !d.crs)
+
+    if (crsDestinations.length === 0) {
+      return fetchNationalRailDepartures(station.crs)
+    }
+
+    // Fetch with filterCrs for each CRS destination (parallel)
+    const fetches = crsDestinations.map((d) =>
+      fetchNationalRailDepartures(station.crs, d.crs!)
+    )
+
+    // Also fetch unfiltered if there are text-only destinations
+    if (hasTextDestinations) {
+      fetches.push(fetchNationalRailDepartures(station.crs))
+    }
+
+    const results = await Promise.all(fetches)
+
+    // Merge and deduplicate by service ID
+    const seen = new Set<string>()
+    const merged: Arrival[] = []
+    for (const arrivals of results) {
+      for (const arrival of arrivals) {
+        if (!seen.has(arrival.id)) {
+          seen.add(arrival.id)
+          merged.push(arrival)
+        }
+      }
+    }
+    return merged.sort((a, b) => a.expectedDeparture - b.expectedDeparture)
   }
   return fetchTflArrivals(station.id)
 }
