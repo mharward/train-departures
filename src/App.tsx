@@ -32,7 +32,6 @@ function App() {
     {
       autoRefresh: config.autoRefresh,
       refreshInterval: config.refreshInterval,
-      maxDepartures: config.maxDepartures,
     }
   )
 

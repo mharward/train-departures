@@ -26,12 +26,11 @@ export async function searchStations(query: string): Promise<StationSearchResult
 
 /**
  * Compute how many rows to request from Darwin.
- * Buffer for walk time filtering and cancelled services.
- * Text-only destination filters need the full 149 for client-side matching.
+ * Always fetches generously so extra trains beyond maxDepartures are available
+ * to slide in as earlier trains depart, without waiting for a refresh.
  */
-function computeNumRows(station: Station, maxDepartures: number, needsFullList: boolean): number {
-  if (needsFullList) return 149
-  return Math.min((maxDepartures + (station.minMinutes || 0)) * 2, 149)
+function computeNumRows(station: Station): number {
+  return Math.min((30 + (station.minMinutes || 0)) * 2, 149)
 }
 
 /**
@@ -40,18 +39,18 @@ function computeNumRows(station: Station, maxDepartures: number, needsFullList: 
  * server-side filtering. Multiple CRS destinations trigger parallel requests
  * that are merged (OR logic).
  */
-export async function fetchArrivals(station: Station, maxDepartures = 8): Promise<Arrival[]> {
+export async function fetchArrivals(station: Station): Promise<Arrival[]> {
   if (station.type === 'national-rail') {
     const crsDestinations = (station.destinations || []).filter((d) => d.crs)
     const hasTextDestinations = (station.destinations || []).some((d) => !d.crs)
 
     if (crsDestinations.length === 0) {
-      const numRows = computeNumRows(station, maxDepartures, hasTextDestinations)
+      const numRows = hasTextDestinations ? 149 : computeNumRows(station)
       return fetchNationalRailDepartures(station.crs, undefined, numRows)
     }
 
     // Fetch with filterCrs for each CRS destination (parallel)
-    const numRows = computeNumRows(station, maxDepartures, false)
+    const numRows = computeNumRows(station)
     const fetches = crsDestinations.map((d) =>
       fetchNationalRailDepartures(station.crs, d.crs!, numRows)
     )
