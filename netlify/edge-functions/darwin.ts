@@ -41,7 +41,7 @@ interface DeparturesResponse {
   trainServices: Service[] | null
 }
 
-function buildDepartureBoardRequest(token: string, crs: string, filterCrs?: string): string {
+function buildDepartureBoardRequest(token: string, crs: string, filterCrs?: string, numRows = 149): string {
   const filterXml = filterCrs
     ? `\n      <ldb:filterCrs>${filterCrs}</ldb:filterCrs>\n      <ldb:filterType>to</ldb:filterType>`
     : ''
@@ -57,14 +57,14 @@ function buildDepartureBoardRequest(token: string, crs: string, filterCrs?: stri
   </soap:Header>
   <soap:Body>
     <ldb:GetDepartureBoardRequest>
-      <ldb:numRows>149</ldb:numRows>
+      <ldb:numRows>${numRows}</ldb:numRows>
       <ldb:crs>${crs}</ldb:crs>${filterXml}
     </ldb:GetDepartureBoardRequest>
   </soap:Body>
 </soap:Envelope>`
 }
 
-function buildDepBoardWithDetailsRequest(token: string, crs: string, filterCrs?: string): string {
+function buildDepBoardWithDetailsRequest(token: string, crs: string, filterCrs?: string, numRows = 10): string {
   const filterXml = filterCrs
     ? `\n      <ldb:filterCrs>${filterCrs}</ldb:filterCrs>\n      <ldb:filterType>to</ldb:filterType>`
     : ''
@@ -80,7 +80,7 @@ function buildDepBoardWithDetailsRequest(token: string, crs: string, filterCrs?:
   </soap:Header>
   <soap:Body>
     <ldb:GetDepBoardWithDetailsRequest>
-      <ldb:numRows>10</ldb:numRows>
+      <ldb:numRows>${numRows}</ldb:numRows>
       <ldb:crs>${crs}</ldb:crs>${filterXml}
     </ldb:GetDepBoardWithDetailsRequest>
   </soap:Body>
@@ -277,6 +277,9 @@ export default async function handler(request: Request): Promise<Response> {
 
   const crs = match[1].toUpperCase()
   const filterCrs = url.searchParams.get('filterCrs')?.toUpperCase() || undefined
+  const numRowsParam = parseInt(url.searchParams.get('numRows') || '149', 10)
+  const numRows = Math.max(1, Math.min(isNaN(numRowsParam) ? 149 : numRowsParam, 149))
+  const detailRows = Math.min(numRows, 10)
   const accessToken = Deno.env.get('DARWIN_ACCESS_TOKEN')
 
   if (!accessToken) {
@@ -287,10 +290,10 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   try {
-    // Make both calls in parallel: full board (149 rows) + details (10 rows)
+    // Make both calls in parallel: board (up to 149 rows) + details (up to 10 rows)
     const [boardXml, detailsXml] = await Promise.all([
-      fetchDarwin(buildDepartureBoardRequest(accessToken, crs, filterCrs)),
-      fetchDarwin(buildDepBoardWithDetailsRequest(accessToken, crs, filterCrs)),
+      fetchDarwin(buildDepartureBoardRequest(accessToken, crs, filterCrs, numRows)),
+      fetchDarwin(buildDepBoardWithDetailsRequest(accessToken, crs, filterCrs, detailRows)),
     ])
 
     const board = parseSoapResponse(boardXml)

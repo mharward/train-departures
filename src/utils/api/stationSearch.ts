@@ -25,28 +25,40 @@ export async function searchStations(query: string): Promise<StationSearchResult
 }
 
 /**
+ * Compute how many rows to request from Darwin.
+ * Buffer for walk time filtering and cancelled services.
+ * Text-only destination filters need the full 149 for client-side matching.
+ */
+function computeNumRows(station: Station, maxDepartures: number, needsFullList: boolean): number {
+  if (needsFullList) return 149
+  return Math.min((maxDepartures + (station.minMinutes || 0)) * 2, 149)
+}
+
+/**
  * Unified fetch function - determines which API to use based on station type.
  * For National Rail with CRS-based destinations, uses Darwin's filterCrs for
  * server-side filtering. Multiple CRS destinations trigger parallel requests
  * that are merged (OR logic).
  */
-export async function fetchArrivals(station: Station): Promise<Arrival[]> {
+export async function fetchArrivals(station: Station, maxDepartures = 8): Promise<Arrival[]> {
   if (station.type === 'national-rail') {
     const crsDestinations = (station.destinations || []).filter((d) => d.crs)
     const hasTextDestinations = (station.destinations || []).some((d) => !d.crs)
 
     if (crsDestinations.length === 0) {
-      return fetchNationalRailDepartures(station.crs)
+      const numRows = computeNumRows(station, maxDepartures, hasTextDestinations)
+      return fetchNationalRailDepartures(station.crs, undefined, numRows)
     }
 
     // Fetch with filterCrs for each CRS destination (parallel)
+    const numRows = computeNumRows(station, maxDepartures, false)
     const fetches = crsDestinations.map((d) =>
-      fetchNationalRailDepartures(station.crs, d.crs!)
+      fetchNationalRailDepartures(station.crs, d.crs!, numRows)
     )
 
-    // Also fetch unfiltered if there are text-only destinations
+    // Also fetch unfiltered if there are text-only destinations (needs full list)
     if (hasTextDestinations) {
-      fetches.push(fetchNationalRailDepartures(station.crs))
+      fetches.push(fetchNationalRailDepartures(station.crs, undefined, 149))
     }
 
     const results = await Promise.all(fetches)

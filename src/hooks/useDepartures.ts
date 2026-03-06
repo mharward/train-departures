@@ -5,6 +5,7 @@ import type { Station, Arrival, DeparturesMap, ErrorsMap } from '../types'
 interface UseDeparturesOptions {
   autoRefresh?: boolean
   refreshInterval?: number
+  maxDepartures?: number
 }
 
 interface UseDeparturesReturn {
@@ -18,7 +19,7 @@ interface UseDeparturesReturn {
 
 export function useDepartures(
   stations: Station[],
-  { autoRefresh = false, refreshInterval = 30 }: UseDeparturesOptions = {}
+  { autoRefresh = false, refreshInterval = 30, maxDepartures = 8 }: UseDeparturesOptions = {}
 ): UseDeparturesReturn {
   const [departures, setDepartures] = useState<DeparturesMap>({})
   const [loading, setLoading] = useState(true)
@@ -75,7 +76,7 @@ export function useDepartures(
     await Promise.all(
       currentStations.map(async (station) => {
         try {
-          const arrivals = await fetchArrivals(station)
+          const arrivals = await fetchArrivals(station, maxDepartures)
           newRawArrivals[station.instanceId] = arrivals
           newErrors[station.instanceId] = null
         } catch (error) {

@@ -44,13 +44,19 @@ export function extractCallingPoints(service: NationalRailService): CallingPoint
 /**
  * Fetch National Rail departures via Darwin edge function.
  * When filterCrs is provided, Darwin returns only services calling at that station.
+ * numRows controls how many services to request (default 149).
  */
-export async function fetchNationalRailDepartures(crsCode: string, filterCrs?: string): Promise<Arrival[]> {
-  const cacheKey = filterCrs ? `nr-departures-${crsCode}-${filterCrs}` : `nr-departures-${crsCode}`
+export async function fetchNationalRailDepartures(crsCode: string, filterCrs?: string, numRows = 149): Promise<Arrival[]> {
+  const cacheKey = filterCrs
+    ? `nr-departures-${crsCode}-${filterCrs}-${numRows}`
+    : `nr-departures-${crsCode}-${numRows}`
 
   return withCache(cacheKey, async () => {
-    const params = filterCrs ? `?filterCrs=${encodeURIComponent(filterCrs)}` : ''
-    const response = await fetchWithRetry(`${DARWIN_BASE_URL}/departures/${crsCode}${params}`)
+    const params = new URLSearchParams()
+    if (filterCrs) params.set('filterCrs', filterCrs)
+    if (numRows < 149) params.set('numRows', String(numRows))
+    const qs = params.toString() ? `?${params.toString()}` : ''
+    const response = await fetchWithRetry(`${DARWIN_BASE_URL}/departures/${crsCode}${qs}`)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch National Rail departures: ${response.status}`)
