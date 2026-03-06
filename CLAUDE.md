@@ -36,11 +36,11 @@ This is a React + Vite frontend app that displays real-time train departures fro
 
 ### Key Files
 
-- `src/utils/api.js` - API fetching, normalization, and filtering logic. Arrivals store `expectedDeparture` (absolute timestamp) rather than relative seconds so countdowns work without re-fetching.
-- `src/hooks/useConfig.js` - User settings with migration support for schema changes
-- `src/hooks/useDepartures.js` - Manages raw arrivals in a ref, re-filters every second to update countdowns
-- `src/utils/modeColors.js` - Official TfL line colors and National Rail operator colors
-- `src/components/TransportIcon.jsx` - TfL roundel and National Rail double-arrow SVG icons
+- `src/utils/api/` - API fetching, normalization, and filtering logic. Arrivals store `expectedDeparture` (absolute timestamp) rather than relative seconds so countdowns work without re-fetching.
+- `src/hooks/useConfig.ts` - User settings with migration support for schema changes
+- `src/hooks/useDepartures.ts` - Manages raw arrivals in a ref, re-filters every second to update countdowns
+- `src/utils/modeColors.ts` - Official TfL line colors and National Rail operator colors
+- `src/components/TransportIcon.tsx` - TfL roundel and National Rail double-arrow SVG icons
 
 ### Destination Filtering
 
@@ -49,3 +49,7 @@ Stations have a `destinations` array for filtering trains:
 - Multiple destinations use OR logic (trains to ANY selected destination)
 - For National Rail, matches final destination AND calling points
 - Legacy `destinationFilter` string is migrated to `destinations` array on load
+
+### Documentation
+
+When adding user-facing features, update the **User Guide** section in `README.md` so it stays current. The Features list and User Guide should cover all functionality visible to end users.
